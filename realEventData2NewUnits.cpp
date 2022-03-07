@@ -112,7 +112,6 @@ float* rejectionInfo(char* filename, char* filename2, float rho, float z, float 
 {
 
 	TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z,1);
-
 	TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z,1);
 
 	//cut selection histograms
@@ -214,11 +213,7 @@ float* cutPerformanceValues(char* filename, char* filename2, float rho, float z,
 	float alphaRejection = analysisAlphaHistogram->Integral(1, 100, cutValue, 100) / allAlphas;
 	float betaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, cutValue) / allBetas;
 
-	static float values[4];
-	values[0] = youdenCutValue;
-	values[1] = generalCutValue;
-	values[2] = alphaRejection;
-	values[3] = betaAcceptance;
+	static float values [] = { youdenCutValue, generalCutValue, alphaRejection, betaRejection };
 	
 	return values;
 }
@@ -257,11 +252,8 @@ float* averageValues(char* filename)
 
 	f->Close();
 
-	static float values[4];
-	values[0] = avgX / k;
-	values[1] = avgY / k;
-	values[2] = avgZ / k;
-	values[3] = sqrt((values[0]*values[0]) + (values[1]*values[1]));
+	static float values [] = { avgX/k, avgY/k, avgZ/k, sqrt(pow(values[0],2) + pow(values[1],2)) };
+	
 	return values;
 }
 
