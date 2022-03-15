@@ -379,7 +379,6 @@ float* rejectionInfo(const string& alphaFile, const string& betaFile, const stri
 		}
 		else 
 		{
-			cout<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 			youdenStatistic = 0;
 			generalStatistic = 0;
 		}		
