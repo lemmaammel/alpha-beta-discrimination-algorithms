@@ -19,34 +19,28 @@
 #include <string> 
 using namespace std;
 
-TCanvas* NhitHistogram(const string& filename, const string& filename2, const string& fitName, const string& className, const string& classification)
+TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const string& fitName, const string& className, const string& classification)
 {
 
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
 
-	TH2D* histogramClassificationNhit1 = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -.1, 0.1);
-	TH2D* histogramClassificationNhit2 = new TH2D("#alpha Events","",100,100,1000,100,-0.1,0.1);
-	TH2D* histograms [2] = {histogramClassificationNhit1, histogramClassificationNhit2};
+	TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+	TH2D* betaHistogram = new TH2D("#alpha Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+	TH2D* histograms [2] = {alphaHistogram, betaHistogram};
 
-	histogramClassificationNhit1->SetMarkerColor(4);
-	histogramClassificationNhit2->SetMarkerColor(6);
+	// customize aesthetic of histograms
+	alphaHistogram->SetMarkerColor(4);
+	betaHistogram->SetMarkerColor(6);
 	histograms[0]->SetMarkerStyle(20);
 	histograms[1]->SetMarkerStyle(20);
 
 	RAT::DB::Get()->SetAirplaneModeStatus(true);	
 
-	//const string& files[2] = {filename, filename2};
-
-	// for(every entry in filename)
-	//    for(every triggered event in entry
-	//     for(i=0; i<nhit)
-	//      histogramClassificiationNhit->fill(classificationValue)
-
 	//loop through all entries in filename
 	for(int m = 0; m<2; m++)
 	{
-		string files[2] = {filename, filename2};
+		string files[2] = {alphaFile, betaFile};
 		RAT::DU::DSReader currentReader(files[m]);
 
 		for(size_t i=0; i<currentReader.GetEntryCount(); i++)
@@ -63,11 +57,11 @@ TCanvas* NhitHistogram(const string& filename, const string& filename2, const st
 				if(!rEV.ClassifierResultExists(className)) continue;
 				if(!rEV.GetClassifierResult(className).GetValid()) continue;
 
-				//classifier result
+				// classifier result
 				RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
 				double cValue = cResult.GetClassification(classification);
 
-				//nHit value for calibrated hits
+				// nHit value for calibrated hits
 				const RAT::DS::EV& numberHits = rDS.GetEV(j);
 				
 				// test position
@@ -78,206 +72,173 @@ TCanvas* NhitHistogram(const string& filename, const string& filename2, const st
 				if(numberHits.GetCalPMTs().GetAllCount() > 25)
 				{
 					histograms[m]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-					//histograms[m]->Fill(200, x/100000);
 				}				
 			}
 		}
 	}
 
-	histogramClassificationNhit1->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	histogramClassificationNhit1->GetYaxis()->SetTitleOffset(1.2);
-	histogramClassificationNhit1->GetXaxis()->SetTitle("Number of Hits");
-	histogramClassificationNhit1->GetXaxis()->SetLabelSize(.03);
-	histogramClassificationNhit1->GetYaxis()->SetLabelSize(.02);
+	// customize histogram labeling
+	alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+	alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
+	alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
+	alphaHistogram->GetXaxis()->SetLabelSize(0.03);
+	alphaHistogram->GetYaxis()->SetLabelSize(0.02);
 	
-	histograms[0]->Draw();
-	histograms[1]->Draw("same");
+	alphaHistogram->Draw();
+	betaHistogram->Draw("same");
 	
 	// build a legend
-	TLegend *legend = new TLegend(0.1,0.7,0.48,.9);
+	TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
 	legend->SetHeader("Legend");
-	legend->AddEntry(histograms[0], "#alpha Events", "p");
-	legend->AddEntry(histograms[1], "#beta Events", "p");
+	legend->AddEntry(alphaHistogram, "#alpha Events", "p");
+	legend->AddEntry(betaHistogram, "#beta Events", "p");
 	legend->Draw();
 
 
-	c1->Print("partialFillHistogramClassificationNhit.pdf", "pdf");
+	c1->Print("realDataNhitHistogram.pdf", "pdf");
 	return c1;
 }
 	
-TH2D* NhitHistogramAlpha(const string& filename, const string& filename2, const string& fitName, const string& className, const string& classification)
+TH2D* NhitHistogramAlpha(const string& alphaFile, const string& fitName, const string& className, const string& classification)
 {
 
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
 
-	TH2D* histogramClassificationNhit1 = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -.1, .1);
-	TH2D* histogramClassificationNhit2 = new TH2D("#alpha Events","",100,100,1000,100,-0.1,.1);
-	TH2D* histograms [2] = {histogramClassificationNhit1, histogramClassificationNhit2};
+	TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
 
-	histogramClassificationNhit1->SetMarkerColor(4);
-	histogramClassificationNhit2->SetMarkerColor(6);
-	histograms[0]->SetMarkerStyle(20);
-	histograms[1]->SetMarkerStyle(20);
+	alphaHistogram->SetMarkerColor(4);
+	alphaHistogram->SetMarkerStyle(20);
 
 	RAT::DB::Get()->SetAirplaneModeStatus(true);	
+	RAT::DU::DSReader currentReader(alphaFile);
 
-	//const string& files[2] = {filename, filename2};
-
-	// for(every entry in filename)
-	//    for(every triggered event in entry
-	//     for(i=0; i<nhit)
-	//      histogramClassificiationNhit->fill(classificationValue)
-
-	//loop through all entries in filename
-	for(int m = 0; m<2; m++)
+	for(size_t i=0; i<currentReader.GetEntryCount(); i++)
 	{
-		string files[2] = {filename, filename2};
-		RAT::DU::DSReader currentReader(files[m]);
-
-		for(size_t i=0; i<currentReader.GetEntryCount(); i++)
-		{
-			const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
+		const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
 			
-			//loop through all events in entries
-			for(size_t j=0; j<rDS.GetEVCount(); j++)
-			{
+		//loop through all events in entries
+		for(size_t j=0; j<rDS.GetEVCount(); j++)
+		{
 				
-				//get the ev
-				const RAT::DS::EV& rEV = rDS.GetEV(j);
+			//get the ev
+			const RAT::DS::EV& rEV = rDS.GetEV(j);
 	
-				if(!rEV.ClassifierResultExists(className)) continue;
-				if(!rEV.GetClassifierResult(className).GetValid()) continue;
+			if(!rEV.ClassifierResultExists(className)) continue;
+			if(!rEV.GetClassifierResult(className).GetValid()) continue;
 
-				//classifier result
-				RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
-				double cValue = cResult.GetClassification(classification);
+			//classifier result
+			RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
+			double cValue = cResult.GetClassification(classification);
 
-				//nHit value for calibrated hits
-				const RAT::DS::EV& numberHits = rDS.GetEV(j);
+			//nHit value for calibrated hits
+			const RAT::DS::EV& numberHits = rDS.GetEV(j);
 				
-				// test position
-				RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
-				RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
-				double x = fVertex.GetPosition().Z();
+			// test position
+			RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
+			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
+			double x = fVertex.GetPosition().Z();
 
-				if(numberHits.GetCalPMTs().GetAllCount() > 25)
-				{
-					histograms[m]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-					//histograms[m]->Fill(200, x/100000);
-				}				
-			}
+			if(numberHits.GetCalPMTs().GetAllCount() > 25)
+			{
+				alphaHistogram->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+			}				
 		}
 	}
 
-	histogramClassificationNhit1->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	histogramClassificationNhit1->GetYaxis()->SetTitleOffset(1.2);
-	histogramClassificationNhit1->GetXaxis()->SetTitle("Number of Hits");
-	histogramClassificationNhit1->GetXaxis()->SetLabelSize(.03);
-	histogramClassificationNhit1->GetYaxis()->SetLabelSize(.02);
+	alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+	alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
+	alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
+	alphaHistogram->GetXaxis()->SetLabelSize(.03);
+	alphaHistogram->GetYaxis()->SetLabelSize(.02);
 	
-	histograms[0]->Draw();
-	histograms[1]->Draw("same");
+	alphaHistogram->Draw();
+	alphaHistogram->Draw("same");
 	
 	// build a legend
 	TLegend *legend = new TLegend(0.1,0.7,0.48,.9);
 	legend->SetHeader("Legend");
-	legend->AddEntry(histograms[0], "#alpha Events", "p");
-	legend->AddEntry(histograms[1], "#beta Events", "p");
+	legend->AddEntry(alphaHistogram, "#alpha Events", "p");
 	legend->Draw();
 
+	c1->Print("realDataAlphaNhitHistogram.pdf", "pdf");
 
-	//c1->Print("histogramClassificationNhit.pdf", "pdf");
-	return histogramClassificationNhit2;
+	return alphaEvents;
 }	
 
-
-
-TH2D* NhitHistogramBeta(const string& filename, const string& filename2, const string& fitName, const string& className, const string& classification)
+TH2D* NhitHistogramBeta(const string& betaFile, const string& fitName, const string& className, const string& classification)
 {
 
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
 
-	TH2D* histogramClassificationNhit1 = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -.1, .1);
-	TH2D* histogramClassificationNhit2 = new TH2D("#alpha Events","",100,100,1000,100,-0.1,.1);
-	TH2D* histograms [2] = {histogramClassificationNhit1, histogramClassificationNhit2};
+	TH2D* betaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
 
-	histogramClassificationNhit1->SetMarkerColor(4);
-	histogramClassificationNhit2->SetMarkerColor(6);
-	histograms[0]->SetMarkerStyle(20);
-	histograms[1]->SetMarkerStyle(20);
+	betaHistogram->SetMarkerColor(4);
+	betaHistogram->SetMarkerStyle(20);
 
 	RAT::DB::Get()->SetAirplaneModeStatus(true);	
+	RAT::DU::DSReader currentReader(betaFile);
 
-	//loop through all entries in filename
-	for(int m = 0; m<2; m++)
+	for(size_t i=0; i<currentReader.GetEntryCount(); i++)
 	{
-		string files[2] = {filename, filename2};
-		RAT::DU::DSReader currentReader(files[m]);
-
-		for(size_t i=0; i<currentReader.GetEntryCount(); i++)
-		{
-			const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
+		const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
 			
-			//loop through all events in entries
-			for(size_t j=0; j<rDS.GetEVCount(); j++)
-			{
+		//loop through all events in entries
+		for(size_t j=0; j<rDS.GetEVCount(); j++)
+		{
 				
-				//get the ev
-				const RAT::DS::EV& rEV = rDS.GetEV(j);
+			//get the ev
+			const RAT::DS::EV& rEV = rDS.GetEV(j);
 	
-				if(!rEV.ClassifierResultExists(className)) continue;
-				if(!rEV.GetClassifierResult(className).GetValid()) continue;
+			if(!rEV.ClassifierResultExists(className)) continue;
+			if(!rEV.GetClassifierResult(className).GetValid()) continue;
 
-				//classifier result
-				RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
-				double cValue = cResult.GetClassification(classification);
+			//classifier result
+			RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
+			double cValue = cResult.GetClassification(classification);
 
-				//nHit value for calibrated hits
-				const RAT::DS::EV& numberHits = rDS.GetEV(j);
+			//nHit value for calibrated hits
+			const RAT::DS::EV& numberHits = rDS.GetEV(j);
 				
-				// test position
-				RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
-				RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
-				double x = fVertex.GetPosition().Z();
+			// test position
+			RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
+			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
+			double x = fVertex.GetPosition().Z();
 
-				if(numberHits.GetCalPMTs().GetAllCount() > 25)
-				{
-					histograms[m]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-					//histograms[m]->Fill(200, x/100000);
-				}				
-			}
+			if(numberHits.GetCalPMTs().GetAllCount() > 25)
+			{
+				betaHistogram->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+			}				
 		}
 	}
 
-	histogramClassificationNhit1->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	histogramClassificationNhit1->GetYaxis()->SetTitleOffset(1.2);
-	histogramClassificationNhit1->GetXaxis()->SetTitle("Number of Hits");
-	histogramClassificationNhit1->GetXaxis()->SetLabelSize(.03);
-	histogramClassificationNhit1->GetYaxis()->SetLabelSize(.02);
+	betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+	betaHistogram->GetYaxis()->SetTitleOffset(1.2);
+	betaHistogram->GetXaxis()->SetTitle("Number of Hits");
+	betaHistogram->GetXaxis()->SetLabelSize(.03);
+	betaHistogram->GetYaxis()->SetLabelSize(.02);
 	
-	histograms[0]->Draw();
-	histograms[1]->Draw("same");
+	betaHistogram->Draw();
+	betaHistogram->Draw("same");
 	
 	// build a legend
-	TLegend *legend = new TLegend(0.2,0.2,0.8,.8);
+	TLegend *legend = new TLegend(0.1,0.7,0.48,.9);
 	legend->SetHeader("Legend");
-	legend->AddEntry(histograms[0], "#alpha Events", "p");
-	legend->AddEntry(histograms[1], "#beta Events", "p");
+	legend->AddEntry(betaHistogram, "#beta Events", "p");
 	legend->Draw();
 
+	c1->Print("realDataBetaNhitHistogram.pdf", "pdf");
 
-	//c1->Print("histogramClassificationNhit.pdf", "pdf");
-	return histogramClassificationNhit1;
+	return betaEvents;
 }
 
-TCanvas* AlphaRejectionHistogram(const string& filename, const string& filename2, const string& fitname, const string& classname, const string& classification, float ratio)
+TCanvas* rejectionHistogram(const string& alphaFile, const string& betaFile, const string& fitname, const string& classname, const string& classification, float ratio)
 {
 
-	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(filename, filename2, fitname, classname, classification);
+	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(alphaFile, fitname, classname, classification);
 
-	TH2D* analysisBetaHistogram = NhitHistogramBeta(filename,filename2, fitname, classname, classification);
+	TH2D* analysisBetaHistogram = NhitHistogramBeta(betaFile, fitname, classname, classification);
 
 	TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
 	c1->cd();
@@ -382,12 +343,12 @@ TCanvas* AlphaRejectionHistogram(const string& filename, const string& filename2
 }
 
 
-float* AlphaRejectionInfo(const string& filename, const string& filename2, const string& fitname, const string& classname, const string& classification, float ratio)
+float* rejectionInfo(const string& alphaFile, const string& betaFile, const string& fitname, const string& classname, const string& classification, float ratio)
 {
 
-	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(filename, filename2, fitname, classname, classification);
+	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(alphaFile, fitname, classname, classification);
 
-	TH2D* analysisBetaHistogram = NhitHistogramBeta(filename,filename2, fitname, classname, classification);
+	TH2D* analysisBetaHistogram = NhitHistogramBeta(betaFile, fitname, classname, classification);
 
 	float meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/2;
 
@@ -461,29 +422,3 @@ float* AlphaRejectionInfo(const string& filename, const string& filename2, const
 
 	return values;
 }
-
-
-/*
-void compileHistogram()
-{
-
-	int copies = 3;
-	string loopvars[9] = ["0_0_3", "0_0_4", "1_0_2","1_0_4","2_0_2","2_0_3","3_0_2","3_0_3","4_0_2"];
-
-	for(int x=0; x<9; x++)
-	{
-    
-    		TCanvas* c1 = new TCanvas("c1", "", 200, 10, 1300, 1300);
-		c1->cd();
-
-    		string name1 =  format("/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_e-*", loopvars[x]);
-    		string name2 = format("/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_alpha*", loopvars[x]);
-
-    		TH2D* htot = NhitHistogram(format("{}.root", name2), format("{}.root", name1), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood");
-
-    		htot->Draw("AL");
-
-    		c1->Print(format("compiledHistogram{}.pdf", loopvars[x]);
-	}
-}
-*/
