@@ -16,7 +16,7 @@ import matplotlib.pyplot as p
 import significantFigures as s
 
 copies = 3
-loopvars = ["0_0_2","0_0_3", "0_0_4", "1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_0_4","3_0_2","3_0_3","4_0_2"]
+loopvars = ["0_0_2", "0_0_3", "0_0_4", "1_0_2","1_0_3", "1_0_4", "2_0_2", "2_0_3", "2_0_4", "3_0_2", "3_0_3", "4_0_2"]
 
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/NhitHistogram.cpp+")
@@ -32,7 +32,7 @@ coordinates2 = []
 graphs = [ClassifierAlphaArray, NhitAlphaArray, ClassifierBetaArray, NhitBetaArray]
 titles = [r"Classification $\alpha$ Summary",r"$N_{\mathrm{hit}}$ $\alpha$ Summary", r"Classification $\beta$ Summary", r"$N_{\mathrm{hit}}$ $\beta$ Summary"]
 graphs2 = ["ClassifierAlphaArray", "NhitAlphaArray", "ClassifierBetaArray", "NhitBetaArray"]
-colorbar = ["Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", "$N_{\mathrm{hit}}$ Value"]
+colorbar = ["Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", r"$N_{\mathrm{hit}}$ Value"]
 
 for loopvar in loopvars:
 
@@ -50,21 +50,12 @@ for loopvar in loopvars:
 	coordinates2.append(float(loopvar[4]))
 
 for graph in graphs:
-	graph.append(-100)
-	graph.append(-100)
-	graph.append(-100)
-	print(len(graph))
+	graph.extend(-100, -100, -100)
 
-coordinates1.append(3)
-coordinates1.append(4)
-coordinates1.append(4)
-coordinates2.append(4)
-coordinates2.append(4)
-coordinates2.append(3)
+coordinates1.extend([3, 4, 4, 4, 4, 3])
 
 for i in range(0,4):
-	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-0.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
-	
+	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-0.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)	
 
 	for k in range(12):
 		array = graphs[i]
@@ -77,5 +68,5 @@ for i in range(0,4):
 	if(i==0 or i==2): p.clim(-0.01, 0.01)
 	else: p.clim(240,250)
 	p.show()
-	p.savefig("Summary{}.pdf".format(graphs2[i]))
+	p.savefig("summary{}.pdf".format(graphs2[i]))
 	p.clf()
