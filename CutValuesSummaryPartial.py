@@ -93,11 +93,6 @@ for i in range(0,8):
 	p.show()
 	p.savefig("partialFillPDFs/SummaryPartialFill{}_Total.pdf".format(graphs2[i]))
 	p.clf()
-print(rows)
-with open(filename, "w") as csvfile:
-	csvwriter = csv.writer(csvfile)
-	csvwriter.writerow(fields)
-	csvwriter.writerows(rows)
 
 with open(filename, "w") as csvfile:
 	csvwriter = csv.writer(csvfile)

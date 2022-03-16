@@ -64,16 +64,10 @@ for i in range(0,17):
 	BetaAcceptanceGeneralArray.append(values[7])
 
 for graph in graphs:
-	graph.append(-100)
-	graph.append(-100)
-	graph.append(-100)
+	graph.extend([-100, -100, -100])
 
-rhoCoordinates.append(0.392)
-rhoCoordinates.append(0.504)
-rhoCoordinates.append(0.504)
-zCoordinates.append(4)
-zCoordinates.append(4)
-zCoordinates.append(3)
+rhoCoordinates.extend(0.392, 0.504, 0.504)
+zCoordinates.extend([4, 4, 3])
 
 for i in range(0,8):
 	p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((0.0,0.56),(0.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)

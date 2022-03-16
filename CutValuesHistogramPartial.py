@@ -42,11 +42,6 @@ graphs = [ClassifierYoudenArray, ClassifierGeneralArray, ValueYoudenArray, Value
 titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden Cut Value", "General Cut Value", r"Youden $\alpha$ Rejection", r"Youden $\beta$ Acceptance", r"General $\alpha$ Rejection", r"General $\beta$ Acceptance"]
 graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance"]
 colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance"]
-titles2 = []
-
-for title in titles:
-	newTitle = title
-	titles2.append(newTitle)
 
 
 for loopvar in loopvars:
@@ -69,29 +64,21 @@ for loopvar in loopvars:
 	coordinates2.append(float(loopvar[4]))
 
 for graph in graphs:
-	graph.append(-100)
-	graph.append(-100)
-	graph.append(-100)
+	graph.extend([-100, -100, -100])
 
-coordinates1.append(3)
-coordinates1.append(4)
-coordinates1.append(4)
-coordinates2.append(4)
-coordinates2.append(4)
-coordinates2.append(3)
-
+coordinates1.extend([3, 4, 4])
+coordinates2.extend([4, 4, 4])
 
 for i in range(0,8):
 	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
 
 	for k in range(12):
 		array = graphs[i]
-		print(array[k])
 		p.text(coordinates1[k], coordinates2[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
 
 	p.xlabel(r"$\rho$ coordinate (m)")
 	p.ylabel(r"$z$ coordinate (m)")
-	p.title(titles2[i])
+	p.title(titles[i])
 	p.colorbar(label=colorbar[i])
 	if i == 0 or i == 1: p.clim(0.009, 0.012)
 	if i == 2: p.clim(0.85, 1.01)

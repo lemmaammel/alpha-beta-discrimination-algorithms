@@ -73,17 +73,10 @@ for loopvar in loopvars:
 	coordinates2.append(float(loopvar[4]))
 
 for graph in graphs:
-	graph.append(-100)
-	graph.append(-100)
-	graph.append(-100)
+	graph.extend([-100, -100, -100])
 
-coordinates1.append(3)
-coordinates1.append(4)
-coordinates1.append(4)
-coordinates2.append(4)
-coordinates2.append(4)
-coordinates2.append(3)
-
+coordinates1.extend([3, 4, 4])
+coordinates2.extend([4, 4, 3])
 
 for i in range(0,4):
 	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-0.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)

@@ -29,9 +29,9 @@ int* getEventCoordinates(const std::string& filename, const std::string& fitname
 	
 	for(size_t i=0; i<dsReader.GetEntryCount(); i++)
 	{	
-		cout<<"test1";			
+	
 		const RAT::DS::Entry& rDS = dsReader.GetEntry(i);
-		cout<<"test2";
+
 		for(size_t iEV=0; iEV<rDS.GetEVCount(); iEV++)
 		{
 			const RAT::DS::EV& rEV = rDS.GetEV(iEV);
@@ -50,9 +50,6 @@ int* getEventCoordinates(const std::string& filename, const std::string& fitname
 			counter++;
 		}
 	}
-	cout<<"COUNTER: ";
-	cout<<counter;
-	cout<<"     ";
 
 	averageXCoordinate = averageXCoordinate / counter;
 	averageYCoordinate = averageYCoordinate / counter;
@@ -62,7 +59,7 @@ int* getEventCoordinates(const std::string& filename, const std::string& fitname
 	static int values[2];
 	values[0] = (int)averageZCoordinate;
 	values[1] = (int)averageRhoCoordinate;
-	cout<<(int)averageZCoordinate;
+	
 	return values;
 }
 	

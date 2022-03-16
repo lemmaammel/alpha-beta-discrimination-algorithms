@@ -10,7 +10,6 @@
 #include <RAT/DS/MC.hh>
 #include <TStyle.h>
 #include <iostream>
-//#include <format.h>
 
 #include <TH2D.h>
 #include <TMath.h>
