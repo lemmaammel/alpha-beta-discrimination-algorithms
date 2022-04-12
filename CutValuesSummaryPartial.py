@@ -16,14 +16,10 @@ import matplotlib.pyplot as p
 import significantFigures as s
 import findRatio as f
 
-loopvars = ["0_0_2","0_0_3", "0_0_4","1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_0_4"]
+loopvars = ["0_0_2", "0_0_3", "0_0_4", "1_0_2", "1_0_3", "1_0_4", "2_0_2", "2_0_3", "2_0_4"]
 
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/NhitHistogram.cpp+")
-
-# set ratio Alpha/Beta
-#ratio = f.findRatio(0.78,0.78)
-#ratio2 = str(s.significantFigures(ratio,3)).replace(".","-")
 
 ClassifierYoudenArray = []
 ValueYoudenArray = []
@@ -97,5 +93,6 @@ for i in range(0,8):
 with open(filename, "w") as csvfile:
 	csvwriter = csv.writer(csvfile)
 	csvwriter.writerow(fields)
-	csvwriter.writerows([rows])
+	csvwriter.writerows(rows)
+
 

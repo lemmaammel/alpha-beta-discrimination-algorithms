@@ -244,6 +244,8 @@ float* averageValues(char* filename)
 		t->GetEntry(i);
 	
 		if(nhits<0) continue;
+		if(sqrt(pow(posX,2) + pow(posY,2)) < 0.0 || sqrt(pow(posX,2) + pow(posY,2)) > 5.0) continue;
+		if(posZ < -5.0 || posZ > 5.0) continue;
 
 		avgX = avgX + posx;
 		avgY = avgY + posy;

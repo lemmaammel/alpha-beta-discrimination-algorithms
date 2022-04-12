@@ -21,17 +21,12 @@ int* getEventCoordinates(const std::string& filename, const std::string& fitname
 	
 	RAT::DU::DSReader dsReader(filename);
 
-	float averageXCoordinate = 0;
-	float averageYCoordinate = 0;
-	float averageZCoordinate = 0;
-	float averageRhoCoordinate = 0;
-	float counter = 0;
+	float averageXCoordinate, averageYCoordinate, averageZCoordinate, averageRhoCoordinate, counter = 0;
 	
 	for(size_t i=0; i<dsReader.GetEntryCount(); i++)
-	{	
-	
+	{				
 		const RAT::DS::Entry& rDS = dsReader.GetEntry(i);
-
+		
 		for(size_t iEV=0; iEV<rDS.GetEVCount(); iEV++)
 		{
 			const RAT::DS::EV& rEV = rDS.GetEV(iEV);
@@ -40,7 +35,6 @@ int* getEventCoordinates(const std::string& filename, const std::string& fitname
 			if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) continue;
 			if(!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) continue;
 
-			cout<<"test3";
 			RAT::DS::FitResult fResult = rEV.GetFitResult(fitname);
 			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
 
