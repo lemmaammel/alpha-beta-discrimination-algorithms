@@ -28,21 +28,21 @@ TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const st
 	TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
 	TH2D* betaHistogram = new TH2D("#alpha Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
 	TH2D* histograms [2] = {alphaHistogram, betaHistogram};
+	string files[2] = {alphaFile, betaFile};
 
 	// customize aesthetic of histograms
 	alphaHistogram->SetMarkerColor(4);
 	betaHistogram->SetMarkerColor(6);
-	histograms[0]->SetMarkerStyle(20);
-	histograms[1]->SetMarkerStyle(20);
+	alphaHistogram->SetMarkerStyle(20);
+	betaHistogram->SetMarkerStyle(20);
 
 	RAT::DB::Get()->SetAirplaneModeStatus(true);
 
 	//loop through all entries in filename
 	for(int m = 0; m<2; m++)
 	{
-		string files[2] = {alphaFile, betaFile};
 		RAT::DU::DSReader currentReader(files[m]);
-
+		
 		for(size_t i=0; i<currentReader.GetEntryCount(); i++)
 		{
 			const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
