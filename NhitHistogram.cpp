@@ -15,9 +15,10 @@
 #include <TMath.h>
 #include <TCanvas.h>
 #include <TLegend.h>
-#include <string> 
+#include <string>
 using namespace std;
 
+// draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
 TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const string& fitName, const string& className, const string& classification)
 {
 
@@ -34,7 +35,7 @@ TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const st
 	histograms[0]->SetMarkerStyle(20);
 	histograms[1]->SetMarkerStyle(20);
 
-	RAT::DB::Get()->SetAirplaneModeStatus(true);	
+	RAT::DB::Get()->SetAirplaneModeStatus(true);
 
 	//loop through all entries in filename
 	for(int m = 0; m<2; m++)
@@ -68,6 +69,7 @@ TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const st
 				RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
 				double x = fVertex.GetPosition().Z();
 
+				// discard events from residual detector light
 				if(numberHits.GetCalPMTs().GetAllCount() > 25)
 				{
 					histograms[m]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
@@ -97,7 +99,8 @@ TCanvas* NhitHistogram(const string& alphaFile, const string& betaFile, const st
 	c1->Print("realDataNhitHistogram.pdf", "pdf");
 	return c1;
 }
-	
+
+// draw scatterplots of alpha events (nhit and classification value as parameters) for an alpha file
 TH2D* NhitHistogramAlpha(const string& alphaFile, const string& fitName, const string& className, const string& classification)
 {
 
@@ -165,6 +168,7 @@ TH2D* NhitHistogramAlpha(const string& alphaFile, const string& fitName, const s
 	return alphaEvents;
 }	
 
+// draw scatterplots of beta events (nhit and classification value as parameters) for a beta file
 TH2D* NhitHistogramBeta(const string& betaFile, const string& fitName, const string& className, const string& classification)
 {
 
@@ -232,6 +236,7 @@ TH2D* NhitHistogramBeta(const string& betaFile, const string& fitName, const str
 	return betaEvents;
 }
 
+// plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
 TCanvas* rejectionHistogram(const string& alphaFile, const string& betaFile, const string& fitname, const string& classname, const string& classification, float ratio)
 {
 
@@ -282,29 +287,24 @@ TCanvas* rejectionHistogram(const string& alphaFile, const string& betaFile, con
 		currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, 2*k);
 		currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, 2*k, 100);
 
-	//	alphaRejectionHistogram->Fill(currentX, currentAlphaHits1/totalAlphaHits);
-	//	betaAcceptanceHistogram->Fill(currentX, currentBetaHits/totalBetaHits);
+
 		alphaRejectionHistogram->SetBinContent(k, currentAlphaHits1/totalAlphaHits);
 		betaAcceptanceHistogram->SetBinContent(k, currentBetaHits/totalBetaHits);
 
 		if(not(currentBetaHits==0 & currentAlphaHits2==0))
-		{
-			//betaSampleFraction->Fill(currentX, currentBetaHits/(currentBetaHits+currentAlphaHits2));	
+		{	
 			betaSampleFraction->SetBinContent(k, currentBetaHits/(currentBetaHits+currentAlphaHits2));
 			youdenStatistic = (currentBetaHits/(currentBetaHits+currentBetaHits2)) + (currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2))-1;
 			generalStatistic = (currentBetaHits)/(sqrt(currentBetaHits+currentAlphaHits2)*50);
 		}
 		else 
 		{
-			//betaSampleFraction->Fill(currentX, 1.0);
 			betaSampleFraction->SetBinContent(k, 1.0);
 			youdenStatistic = 0;
 			generalStatistic = 0;
 		}		
 
 		//fill for cut selection stats
-		//youdenSelection->Fill(currentX, youdenStatistic);
-		//generalSelection->Fill(currentX, generalStatistic);
 		youdenSelection->SetBinContent(k, youdenStatistic);
 		generalSelection->SetBinContent(k, generalStatistic);
 
@@ -341,7 +341,7 @@ TCanvas* rejectionHistogram(const string& alphaFile, const string& betaFile, con
 	return c1;
 }
 
-
+// calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
 float* rejectionInfo(const string& alphaFile, const string& betaFile, const string& fitname, const string& classname, const string& classification, float ratio)
 {
 
