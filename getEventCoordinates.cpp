@@ -1,59 +1,68 @@
 #include <RAT/DU/DSReader.hh>
-#include <RAT/DU/Utility.hh>
-#include <RAT/DB.hh>
-#include <RAT/DU/PMTInfo.hh>
-#include <RAT/DU/LightPathCalculator.hh>
-#include <RAT/DU/GroupVelocity.hh>
 #include <RAT/DS/Entry.hh>
 #include <RAT/DS/EV.hh>
-#include <RAT/DS/PMT.hh>
 #include <RAT/DS/FitResult.hh>
-#include <RAT/DS/MC.hh>
-#include <RAT/DS/MCParticle.hh>
 #include <cmath>
 #include <string>
-#include <iostream>
 
-int* getEventCoordinates(const std::string& filename, const std::string& fitname)
-{
-	const RAT::DU::ReconCorrector &eCorr = RAT::DU::Utility::Get()->GetReconCorrector();
-	const RAT::DU::ReconCalibrator &eCalib = RAT::DU::Utility::Get()->GetReconCalibrator();
-	
+std::vector<double> getEventCoordinates(const std::string& filename, const std::string& fitname) {
 	RAT::DU::DSReader dsReader(filename);
 
-	float averageXCoordinate, averageYCoordinate, averageZCoordinate, averageRhoCoordinate, counter = 0;
-	
-	for(size_t i=0; i<dsReader.GetEntryCount(); i++)
-	{				
+	double averageXCoordinate = 0.0;
+    double averageYCoordinate = 0.0;
+    double averageZCoordinate = 0.0;
+    double averageRhoCoordinate = 0.0;
+    size_t counter = 0;
+
+	for (size_t i = 0; i < dsReader.GetEntryCount(); i++) {
 		const RAT::DS::Entry& rDS = dsReader.GetEntry(i);
-		
-		for(size_t iEV=0; iEV<rDS.GetEVCount(); iEV++)
-		{
+
+		for (size_t iEV = 0; iEV < rDS.GetEVCount(); iEV++) {
 			const RAT::DS::EV& rEV = rDS.GetEV(iEV);
 
-			if(!rEV.FitResultExists(fitname)) continue;
-			if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) continue;
-			if(!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) continue;
+			if(!rEV.FitResultExists(fitname)) {
+                continue;
+            }
+            if(rEV.GetFitResult(fitname).GetVertexCount() != 0) {
+                continue;
+            }
+            if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsPosition()) {
+                continue;
+            }
+            //Consider changes about whether to require valid position and energy
+            if(!rEV.GetFitResult(fitname).GetVertex(0).ValidPosition()) {
+                continue;
+            }
+            if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) {
+                continue;
+            }
+            if(!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) {
+                continue;
+            }
 
 			RAT::DS::FitResult fResult = rEV.GetFitResult(fitname);
 			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
+            TVector3 pos = fVertex.GetPosition();
 
-			averageXCoordinate = averageXCoordinate + fVertex.GetPosition().X();
-			averageYCoordinate = averageYCoordinate + fVertex.GetPosition().Y();
-			averageZCoordinate = averageZCoordinate + fVertex.GetPosition().Z();
-			counter++;
+			averageXCoordinate += pos.X();
+			averageYCoordinate += pos.Y();
+			averageZCoordinate += pos.Z();
+            //We want the average rho coordinate, not the rho coordinate corresponding
+            //to the average x and average y
+			averageRhoCoordinate += pos.Perp();
+            counter++;
 		}
 	}
 
-	averageXCoordinate = averageXCoordinate / counter;
-	averageYCoordinate = averageYCoordinate / counter;
-	averageZCoordinate = averageZCoordinate / counter;
-	averageRhoCoordinate = sqrt((averageXCoordinate*averageXCoordinate)+(averageYCoordinate*averageYCoordinate));
+	averageXCoordinate /= counter;
+	averageYCoordinate /= counter;
+	averageZCoordinate /= counter;
+	averageRhoCoordinate /= counter;
 
-	static int values[2];
-	values[0] = (int)averageZCoordinate;
-	values[1] = (int)averageRhoCoordinate;
-	
+    std::vector<double> values;
+	values.push_back(averageZCoordinate);
+	values.push_back(averageRhoCoordinate);
+
 	return values;
 }
-	
+
