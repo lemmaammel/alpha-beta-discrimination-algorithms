@@ -1,3 +1,5 @@
+// contains functions to generate scatterplots of alpha and beta events, find the optimal cutoff values, and calculate the data relevant to those values
+
 #include <RAT/DU/DSReader.hh>
 #include <RAT/DS/Entry.hh>
 #include <RAT/DS/EV.hh>
@@ -18,13 +20,18 @@
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
 // histogramType = "alpha&beta", "alpha", "beta"
 TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification, const std::string& histogramType = "alpha&beta") {
+	
+	// create canvas to draw the histogram on
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
 
+	// create map of histograms
     std::map<std::string, TH2D*> histFileMap;
 
 	if(histogramType.contains("alpha")) {
+		// create histogram for alpha events
 		TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+		// customize aesthetic features and labels
 		alphaHistogram->SetMarkerColor(4);
 		alphaHistogram->SetMarkerStyle(20);
 		alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
@@ -32,11 +39,14 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 		alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
 		alphaHistogram->GetXaxis()->SetLabelSize(0.03);
 		alphaHistogram->GetYaxis()->SetLabelSize(0.02);
+		// add histogram to the map
 		histFileMap[alphaFile] = alphaHistogram;
 	}
 
 	if(histogramType.contains("beta")) {
-		TH2D* betaHistogram = new TH2D("#alpha Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+		// create histogram for beta events
+		TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+		// customize aesthetic features and labels
 		betaHistogram->SetMarkerColor(6);
 		betaHistogram->SetMarkerStyle(20);
 		betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
@@ -44,6 +54,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 		betaHistogram->GetXaxis()->SetTitle("Number of Hits");
 		betaHistogram->GetXaxis()->SetLabelSize(0.03);
 		betaHistogram->GetYaxis()->SetLabelSize(0.02);
+		// add histogram to the map
     	histFileMap[betaFile] = betaHistogram;
 	}
 
@@ -85,7 +96,8 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                 if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsPosition()) {
                     continue;
                 }
-                //Consider changes about whether to require valid position and energy
+
+                // consider changes about whether to require valid position and energy
                 if(!rEV.GetFitResult(fitname).GetVertex(0).ValidPosition()) {
                     continue;
                 }
@@ -98,7 +110,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 				RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
 				RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
 
-                //We should think about whether we can remove these events in a more consistent way
+                // we should think about whether we can remove these events in a more consistent way
 				// discard events from residual detector light
 				if(numberHits.GetCalPMTs().GetAllCount() > 25) {
 					it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
@@ -111,6 +123,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 	TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
 	legend->SetHeader("Legend");
 
+	// draw relevant histograms on canvas and build legend
 	if(histogramType.contains("alpha") && histogramType.contains("beta")) {
 		alphaHistogram->Draw();
 		betaHistogram->Draw("same");
@@ -126,11 +139,12 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 		legend->AddEntry(betaHistogram, "#beta Events", "p");
 	}
 
-
 	legend->Draw();
 
+	// store histograms in PDFs
 	c1->Print("realDataNhitHistogram.pdf", "pdf");
 
+	// return histograms
 	if(histogramType.contains("alpha")) {
 		return alphaHistogram;
 	}
