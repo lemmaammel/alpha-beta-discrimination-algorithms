@@ -16,22 +16,36 @@
 #include <iostream>
 
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
-TCanvas* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification) {
+// histogramType = "alpha&beta", "alpha", "beta"
+TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification, const std::string& histogramType = "alpha&beta") {
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
 
-	TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
-	TH2D* betaHistogram = new TH2D("#alpha Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
-
     std::map<std::string, TH2D*> histFileMap;
-    histFileMap[alphaFile] = alphaHistogram;
-    hsitFileMap[betaFile] = betaHistogram;
 
-	// customize aesthetic of histograms
-	alphaHistogram->SetMarkerColor(4);
-	betaHistogram->SetMarkerColor(6);
-	alphaHistogram->SetMarkerStyle(20);
-	betaHistogram->SetMarkerStyle(20);
+	if(histogramType.contains("alpha")) {
+		TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+		alphaHistogram->SetMarkerColor(4);
+		alphaHistogram->SetMarkerStyle(20);
+		alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+		alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
+		alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
+		alphaHistogram->GetXaxis()->SetLabelSize(0.03);
+		alphaHistogram->GetYaxis()->SetLabelSize(0.02);
+		histFileMap[alphaFile] = alphaHistogram;
+	}
+
+	if(histogramType.contains("beta")) {
+		TH2D* betaHistogram = new TH2D("#alpha Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+		betaHistogram->SetMarkerColor(6);
+		betaHistogram->SetMarkerStyle(20);
+		betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+		betaHistogram->GetYaxis()->SetTitleOffset(1.2);
+		betaHistogram->GetXaxis()->SetTitle("Number of Hits");
+		betaHistogram->GetXaxis()->SetLabelSize(0.03);
+		betaHistogram->GetYaxis()->SetLabelSize(0.02);
+    	histFileMap[betaFile] = betaHistogram;
+	}
 
 	RAT::DB::Get()->SetAirplaneModeStatus(true);
 
@@ -93,201 +107,40 @@ TCanvas* NhitHistogram(const std::string& alphaFile, const std::string& betaFile
 		}
 	}
 
-	// customize histogram labeling
-	alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
-	alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
-	alphaHistogram->GetXaxis()->SetLabelSize(0.03);
-	alphaHistogram->GetYaxis()->SetLabelSize(0.02);
-
-	alphaHistogram->Draw();
-	betaHistogram->Draw("same");
-
 	// build a legend
 	TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
 	legend->SetHeader("Legend");
-	legend->AddEntry(alphaHistogram, "#alpha Events", "p");
-	legend->AddEntry(betaHistogram, "#beta Events", "p");
-	legend->Draw();
 
+	if(histogramType.contains("alpha") && histogramType.contains("beta")) {
+		alphaHistogram->Draw();
+		betaHistogram->Draw("same");
+		legend->AddEntry(alphaHistogram, "#alpha Events", "p");
+		legend->AddEntry(betaHistogram, "#beta Events", "p");
+	}
+	else if(histogramType.contains("alpha")) {
+		alphaHistogram->Draw();
+		legend->AddEntry(alphaHistogram, "#alpha Events", "p");
+	}
+	else if(histogramType.contains("beta")) {
+		betaaHistogram->Draw();
+		legend->AddEntry(betaHistogram, "#beta Events", "p");
+	}
+
+
+	legend->Draw();
 
 	c1->Print("realDataNhitHistogram.pdf", "pdf");
-	return c1;
-}
 
-// draw scatterplots of alpha events (nhit and classification value as parameters) for an alpha file
-TH2D* NhitHistogramAlpha(const std::string& alphaFile, const std::string& fitName, const std::string& className, const std::string& classification) {
-	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
-	c1->cd();
-
-	TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
-
-	alphaHistogram->SetMarkerColor(4);
-	alphaHistogram->SetMarkerStyle(20);
-
-	RAT::DB::Get()->SetAirplaneModeStatus(true);
-	RAT::DU::DSReader currentReader(alphaFile);
-
-	for (size_t i = 0; i < currentReader.GetEntryCount(); i++) {
-		const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
-
-		//loop through all events in entries
-		for (size_t j = 0; j < rDS.GetEVCount(); j++) {
-			//get the ev
-			const RAT::DS::EV& rEV = rDS.GetEV(j);
-
-			if (!rEV.ClassifierResultExists(className)) {
-                continue;
-            }
-            if (!rEV.GetClassifierResult(className).GetValid()) {
-                continue;
-            }
-
-			//classifier result
-			RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
-			double cValue = cResult.GetClassification(classification);
-
-			//nHit value for calibrated hits
-			const RAT::DS::EV& numberHits = rDS.GetEV(j);
-
-			if (!rEV.FitResultExists(fitname)) {
-                continue;
-            }
-            if (rEV.GetFitResult(fitname).GetVertexCount() != 0) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ContainsPosition()) {
-                continue;
-            }
-            //Consider changes about whether to require valid position and energy
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ValidPosition()) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) {
-                continue;
-            }
-			// test position
-			RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
-			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
-
-			if (numberHits.GetCalPMTs().GetAllCount() > 25) {
-				alphaHistogram->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-			}
-		}
+	if(histogramType.contains("alpha")) {
+		return alphaHistogram;
 	}
-
-	alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
-	alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
-	alphaHistogram->GetXaxis()->SetLabelSize(.03);
-	alphaHistogram->GetYaxis()->SetLabelSize(.02);
-
-	alphaHistogram->Draw();
-	alphaHistogram->Draw("same");
-
-	// build a legend
-	TLegend *legend = new TLegend(0.1,0.7,0.48,.9);
-	legend->SetHeader("Legend");
-	legend->AddEntry(alphaHistogram, "#alpha Events", "p");
-	legend->Draw();
-
-	c1->Print("realDataAlphaNhitHistogram.pdf", "pdf");
-
-	return alphaEvents;
-}
-
-// draw scatterplots of beta events (nhit and classification value as parameters) for a beta file
-TH2D* NhitHistogramBeta(const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification) {
-
-	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
-	c1->cd();
-
-	TH2D* betaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
-
-	betaHistogram->SetMarkerColor(4);
-	betaHistogram->SetMarkerStyle(20);
-
-	RAT::DB::Get()->SetAirplaneModeStatus(true);
-	RAT::DU::DSReader currentReader(betaFile);
-
-	for (size_t i = 0; i < currentReader.GetEntryCount(); i++) {
-		const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
-
-		//loop through all events in entries
-		for (size_t j=0; j<rDS.GetEVCount(); j++) {
-			//get the ev
-			const RAT::DS::EV& rEV = rDS.GetEV(j);
-
-			if (!rEV.ClassifierResultExists(className)) {
-                continue;
-            }
-            if (!rEV.GetClassifierResult(className).GetValid()) {
-                continue;
-            }
-
-			//classifier result
-			RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
-			double cValue = cResult.GetClassification(classification);
-
-			//nHit value for calibrated hits
-			const RAT::DS::EV& numberHits = rDS.GetEV(j);
-
-			// test position
-			if (!rEV.FitResultExists(fitname)) {
-                continue;
-            }
-            if (rEV.GetFitResult(fitname).GetVertexCount() != 0) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ContainsPosition()) {
-                continue;
-            }
-            //Consider changes about whether to require valid position and energy
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ValidPosition()) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) {
-                continue;
-            }
-            if (!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) {
-                continue;
-            }
-			RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
-			RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
-
-			if (numberHits.GetCalPMTs().GetAllCount() > 25) {
-				betaHistogram->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-			}
-		}
-	}
-
-	betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-	betaHistogram->GetYaxis()->SetTitleOffset(1.2);
-	betaHistogram->GetXaxis()->SetTitle("Number of Hits");
-	betaHistogram->GetXaxis()->SetLabelSize(.03);
-	betaHistogram->GetYaxis()->SetLabelSize(.02);
-
-	betaHistogram->Draw();
-	betaHistogram->Draw("same");
-
-	// build a legend
-	TLegend *legend = new TLegend(0.1,0.7,0.48,.9);
-	legend->SetHeader("Legend");
-	legend->AddEntry(betaHistogram, "#beta Events", "p");
-	legend->Draw();
-
-	c1->Print("realDataBetaNhitHistogram.pdf", "pdf");
-
-	return betaEvents;
+	else return betaHistogram;
 }
 
 // plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
 TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio) {
-	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(alphaFile, fitname, classname, classification);
-	TH2D* analysisBetaHistogram = NhitHistogramBeta(betaFile, fitname, classname, classification);
+	TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
+	TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
 
 	TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
 	c1->cd();
@@ -386,8 +239,8 @@ TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& bet
 // calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
 std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio) {
 
-	TH2D* analysisAlphaHistogram = NhitHistogramAlpha(alphaFile, fitname, classname, classification);
-	TH2D* analysisBetaHistogram = NhitHistogramBeta(betaFile, fitname, classname, classification);
+	TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
+	TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
 
 	double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
