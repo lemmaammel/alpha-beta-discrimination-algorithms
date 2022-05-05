@@ -1,3 +1,5 @@
+# compiles information about the classifier cutoff values across positions
+
 #Useful generic python imports
 from __future__ import print_function
 from string import Template
@@ -13,6 +15,10 @@ import math
 
 loopvars = ["0_0_2","0_0_3", "0_0_4", "1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_0_4","3_0_2","3_0_3","4_0_2"]
 
+alphaFilename = raw_input("Please enter the alpha filename:")
+betaFilename = raw_input("Please enter the beta filename:")
+
+
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/NhitHistogram.cpp+")
 
@@ -22,8 +28,8 @@ filename = "summaryClassifierCutoffsPartial.csv"
 
 for loopvar in loopvars:
 
-	name1 =  "/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_e-*".format(loopvar)
-	name2 = "/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_alpha*".format(loopvar)
+	name1 =  "alphaFilename*".format(loopvar)
+	name2 = "betaFilename*".format(loopvar)
 	
 	values = r.AlphaRejectionInfo("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 1)
 	
