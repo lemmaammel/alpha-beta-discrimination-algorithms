@@ -1,4 +1,4 @@
-// contains functions to generate scatterplots of alpha and beta events, find the optimal cutoff values, and calculate the data relevant to those values
+// contains functions to generate scatterplots of simulated alpha and beta events, find the optimal cutoff values, and calculate the data relevant to those values
 
 #include <RAT/DU/DSReader.hh>
 #include <RAT/DS/Entry.hh>
