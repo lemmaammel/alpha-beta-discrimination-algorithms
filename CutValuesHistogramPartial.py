@@ -42,10 +42,10 @@ BetaAcceptanceGeneralArray = []
 coordinates1 = []
 coordinates2 = []
 
-graphs = [ClassifierYoudenArray, ClassifierGeneralArray, ValueYoudenArray, ValueGeneralArray, AlphaRejectionYoudenArray, BetaAcceptanceYoudenArray, AlphaRejectionGeneralArray, BetaAcceptanceGeneralArray]
-titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden Cut Value", "General Cut Value", r"Youden $\alpha$ Rejection", r"Youden $\beta$ Acceptance", r"General $\alpha$ Rejection", r"General $\beta$ Acceptance"]
-graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance"]
-colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance"]
+graphs = [ClassifierYoudenArray, ClassifierGeneralArray, ValueYoudenArray, ValueGeneralArray, AlphaRejectionYoudenArray, BetaAcceptanceYoudenArray, AlphaRejectionGeneralArray, BetaAcceptanceGeneralArray, ClassifierAlphaArray, NhitAlphaArray, ClassifierBetaArray, NhitBetaArray]
+titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden Cut Value", "General Cut Value", r"Youden $\alpha$ Rejection", r"Youden $\beta$ Acceptance", r"General $\alpha$ Rejection", r"General $\beta$ Acceptance", r"Classification $\alpha$ Summary",r"$N_{\mathrm{hit}}$ $\alpha$ Summary", r"Classification $\beta$ Summary", r"$N_{\mathrm{hit}}$ $\beta$ Summary"]
+graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance", "ClassifierAlphaArray", "NhitAlphaArray", "ClassifierBetaArray", "NhitBetaArray"]
+colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance", "Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", r"$N_{\mathrm{hit}}$ Value"]
 
 
 for loopvar in loopvars:
@@ -64,6 +64,14 @@ for loopvar in loopvars:
 	AlphaRejectionGeneralArray.append(values[6])
 	BetaAcceptanceGeneralArray.append(values[7])
 	
+	htot = r.NhitHistogram("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alpha")
+	htot2 = r.NhitHistogram("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "beta")
+	
+	ClassifierAlphaArray.append(htot.GetMean(2))
+	NhitAlphaArray.append(htot.GetMean(1))
+	ClassifierBetaArray.append(htot2.GetMean(2))
+	NhitBetaArray.append(htot2.GetMean(1))
+	
 	coordinates1.append(float(loopvar[0]))
 	coordinates2.append(float(loopvar[4]))
 
@@ -73,7 +81,7 @@ for graph in graphs:
 coordinates1.extend([3, 4, 4])
 coordinates2.extend([4, 4, 4])
 
-for i in range(0,8):
+for i in range(0,12):
 	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
 
 	for k in range(12):
@@ -89,6 +97,8 @@ for i in range(0,8):
 	if i == 3: p.clim(85,100)
 	if i==4 or i==6: p.clim(0.1, 0.4)
 	if i==5 or i==7: p.clim(0.95, 1.0)
+	if(i==8 or i==9): p.clim(-0.01, 0.01)
+	else: p.clim(240,250)
 	p.show()
-	p.savefig("partialFillPDFs/SummaryPartialFill{}_Revised.pdf".format(graphs2[i]))
+	p.savefig("partialFillPDFs/SummaryPartialFill{}.pdf".format(graphs2[i]))
 	p.clf()
