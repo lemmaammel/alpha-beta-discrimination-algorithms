@@ -21,7 +21,7 @@ import os
 import csv
 
 r.gROOT.SetBatch(1) 
-r.gROOT.LoadMacro("/data/snoplus/home/ammel/realEventData.cpp+")
+r.gROOT.LoadMacro("/data/snoplus/home/ammel/realDataValues.cpp+")
 
 loopvars = ["0_0_2","0_0_3","0_0_4", "1_0_2","1_0_3","1_0_4", "2_0_2","2_0_3","2_0_4","3_0_2","3_0_3","4_0_2"]
 
