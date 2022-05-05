@@ -1,4 +1,4 @@
-# Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector
+# Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector given montecarlo simulated data
 # asks user for filename in format "{filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root"
 
 #Useful generic python imports
