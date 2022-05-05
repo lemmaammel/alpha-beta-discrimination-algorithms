@@ -20,7 +20,7 @@ import findRatio as f
 import os
 
 r.gROOT.SetBatch(1) 
-r.gROOT.LoadMacro("/data/snoplus/home/ammel/realEventDataNewUnits.cpp+")
+r.gROOT.LoadMacro("/data/snoplus/home/ammel/RealDataValues.cpp+")
 
 rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
 zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
