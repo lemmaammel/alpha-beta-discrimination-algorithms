@@ -24,7 +24,7 @@ loopvars = ["0_0_2","0_0_3", "0_0_4","1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_
 filename = raw_input("Please enter the filename in format: {filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root")
 
 r.gROOT.SetBatch(1) 
-r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/NhitHistogram.cpp+")
+r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/SimulatedDataValues.cpp+")
 
 # set ratio Alpha/Beta
 #ratio = f.findRatio(0.78,0.78)
