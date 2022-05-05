@@ -1,6 +1,5 @@
 # Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector
 # asks user for filename in format "{filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root"
-# asks user for fitter type in format {partial} or {
 
 #Useful generic python imports
 from __future__ import print_function
@@ -21,6 +20,8 @@ import significantFigures as s
 import findRatio as f
 
 loopvars = ["0_0_2","0_0_3", "0_0_4","1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_0_4","3_0_2","3_0_3","4_0_2"]
+
+filename = raw_input("Please enter the filename in format: {filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root")
 
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/NhitHistogram.cpp+")
@@ -50,8 +51,8 @@ colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "G
 
 for loopvar in loopvars:
 
-	name1 =  "/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_e-*".format(loopvar)
-	name2 = "/data/snoplus/home/ammel/projects/alphabeta_test/{}_dec2020_recoord_alpha*".format(loopvar)
+	name1 =  "filename*".format(loopvar)
+	name2 = "filename*".format(loopvar)
    
 	values = r.AlphaRejectionInfo("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9)
 	
