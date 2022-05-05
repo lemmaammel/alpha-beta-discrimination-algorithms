@@ -1,3 +1,7 @@
+# Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector
+# asks user for filename in format "{filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root"
+# asks user for fitter type in format {partial} or {
+
 #Useful generic python imports
 from __future__ import print_function
 from string import Template
