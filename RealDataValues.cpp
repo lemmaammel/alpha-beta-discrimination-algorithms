@@ -1,3 +1,5 @@
+// contains functions to generate scatterplots of real alpha and beta events, find the optimal cutoff values, and calculate the data relevant to those values
+
 #include <TROOT.h>
 #include <TFile.h>
 #include <TTree.h>
@@ -10,7 +12,6 @@
 #include <iostream>
 
 bool getEventCoordinates(double posx, double posy, double posz, double rho, double z) {
-	//Should make range flexible
     bool inRange = true;
 	if (posz < z-500 || posz > z+500) {
         inRange = false;
@@ -19,7 +20,6 @@ bool getEventCoordinates(double posx, double posy, double posz, double rho, doub
 	if (posrho*posrho/36000000 < rho-0.056 || posrho*posrho/36000000 > rho+0.056) {
         inRange = false;
     }
-    std::cout << std::boolalpha << inRange std::endl;
 	return inRange;
 }
 
@@ -48,12 +48,12 @@ TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int styl
 	for (size_t i = 0; i < k; i++) {
 		t->GetEntry(i);
 		if (nhits < 0) {
-            continue;
-        }
+            		continue;
+        	}
 
-        //Do we want this line?
-		/*if(getEventCoordinates(posx, posy,posz, rho, z))*/
-        histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
+		if(getEventCoordinates(posx, posy,posz, rho, z)) {
+			histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
+		}
 	}
 
 	f->Close();
