@@ -1,3 +1,5 @@
+# Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector given real simulated data (NEW UNITS)
+
 #Useful generic python imports
 from __future__ import print_function
 from string import Template
@@ -22,6 +24,10 @@ r.gROOT.LoadMacro("/data/snoplus/home/ammel/realEventDataNewUnits.cpp+")
 
 rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
 zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
+
+alphaFilename = raw_input("Please enter the alpha filename:")
+betaFilename = raw_input("Please enter the beta filename:")
+
 
 # set ratio Alpha/Beta
 ratio = 9
@@ -52,7 +58,7 @@ titles2 = []
 
 for i in range(0,17):
 
-	values = r.rejectionInfo("/data/snoplus/home/masmiley/snoplusdata/skimmedbiposreprocess/partialFill_data_Po214_reprocess.ntuple.root", "/data/snoplus/home/masmiley/snoplusdata/skimmedbiposreprocess/partialFill_data_Bi214_reprocess.ntuple.root", rhoCoordinates[i], zCoordinates[i]*1000, ratio)
+	values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i]*1000, ratio)
 	
 	ClassifierYoudenArray.append(values[0])
 	ValueYoudenArray.append(values[1])
