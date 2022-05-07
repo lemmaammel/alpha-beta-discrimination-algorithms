@@ -19,12 +19,14 @@ import matplotlib.pyplot as p
 import significantFigures as s
 import findRatio as f
 
-loopvars = ["0_0_2","0_0_3", "0_0_4","1_0_2","1_0_3","1_0_4","2_0_2","2_0_3","2_0_4","3_0_2","3_0_3","4_0_2"]
-
-filename = raw_input("Please enter the filename in format: {filename}{x_coordinate}_{y_coordinate}_{z_coordinate}.root")
-
 r.gROOT.SetBatch(1) 
-r.gROOT.LoadMacro("/data/snoplus/home/ammel/rat/example/root/SimulatedDataValues.cpp+")
+r.gROOT.LoadMacro(".SimulatedDataValues.cpp+")
+
+rhoCoordinates = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4]
+zCoordinates = [2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 2]
+
+alphaFilename = raw_input("Please enter the alpha filename, leaving off the '.root' extension:")
+betaFilename = raw_input("Please enter the beta filename, leaving off the '.root' extension:")
 
 # set ratio Alpha/Beta
 #ratio = f.findRatio(0.78,0.78)
@@ -40,21 +42,18 @@ BetaAcceptanceYoudenArray = []
 AlphaRejectionGeneralArray = []
 BetaAcceptanceGeneralArray = []
 
-coordinates1 = []
-coordinates2 = []
-
 graphs = [ClassifierYoudenArray, ClassifierGeneralArray, ValueYoudenArray, ValueGeneralArray, AlphaRejectionYoudenArray, BetaAcceptanceYoudenArray, AlphaRejectionGeneralArray, BetaAcceptanceGeneralArray, ClassifierAlphaArray, NhitAlphaArray, ClassifierBetaArray, NhitBetaArray]
 titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden Cut Value", "General Cut Value", r"Youden $\alpha$ Rejection", r"Youden $\beta$ Acceptance", r"General $\alpha$ Rejection", r"General $\beta$ Acceptance", r"Classification $\alpha$ Summary",r"$N_{\mathrm{hit}}$ $\alpha$ Summary", r"Classification $\beta$ Summary", r"$N_{\mathrm{hit}}$ $\beta$ Summary"]
 graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance", "ClassifierAlphaArray", "NhitAlphaArray", "ClassifierBetaArray", "NhitBetaArray"]
 colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance", "Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", r"$N_{\mathrm{hit}}$ Value"]
 
 
-for loopvar in loopvars:
+for i in range(0, len(rhoCoordinates)):
 
-	name1 =  "filename*".format(loopvar)
-	name2 = "filename*".format(loopvar)
+	alphaFile = "{}*".format(alphaFilename)
+	betaFile =  "{}*".format(betaFilename)
    
-	values = r.AlphaRejectionInfo("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9)
+	values = r.rejectionInfo("{}.root".format(alphaFile), "{}.root".format(betaFile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i])
 	
 	ClassifierYoudenArray.append(values[0])
 	ValueYoudenArray.append(values[1])
@@ -72,15 +71,12 @@ for loopvar in loopvars:
 	NhitAlphaArray.append(htot.GetMean(1))
 	ClassifierBetaArray.append(htot2.GetMean(2))
 	NhitBetaArray.append(htot2.GetMean(1))
-	
-	coordinates1.append(float(loopvar[0]))
-	coordinates2.append(float(loopvar[4]))
 
 for graph in graphs:
 	graph.extend([-100, -100, -100])
 
-coordinates1.extend([3, 4, 4])
-coordinates2.extend([4, 4, 4])
+rhoCoordinates.extend(3, 4, 4)
+zCoordinates.extend([4, 4, 4])
 
 for i in range(0,12):
 	p.hist2d(coordinates1, coordinates2, bins=(5,3), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
