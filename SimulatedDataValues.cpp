@@ -17,9 +17,21 @@
 #include <string>
 #include <iostream>
 
+bool getEventCoordinates(double posx, double posy, double posz, double rho, double z) {
+    bool inRange = true;
+	if (posz < z-500 || posz > z+500) {
+        inRange = false;
+    }
+	double posrho = sqrt((posx*posx) + (posy*posy));
+	if (posrho < rho-500 || posrho > rho+500) {
+        inRange = false;
+    }
+	return inRange;
+}
+
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
 // histogramType = "alpha&beta", "alpha", "beta"
-TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification, const std::string& histogramType = "alpha&beta") {
+TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification, const std::string& histogramType = "alpha&beta", double rho = 100.0, double z = 100.0;) {
 	
 	// create canvas to draw the histogram on
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
@@ -109,11 +121,14 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                 }
 				RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
 				RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
+		
+            		TVector3 pos = fVertex.GetPosition();
 
                 // we should think about whether we can remove these events in a more consistent way
 				// discard events from residual detector light
 				if(numberHits.GetCalPMTs().GetAllCount() > 25) {
-					it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+					if(z==100.0 && rho==100.0) it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+					else if(getEventCoordinates(sqrt(pos.X()*pos.X() + pos.Y()*pos.Y()), pos.Z(), rho, z) it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
 				}
 			}
 		}
@@ -251,7 +266,7 @@ TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& bet
 }
 
 // calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio) {
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio, double rhoCoordinate, double zCoordinate) {
 
 	TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
 	TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
