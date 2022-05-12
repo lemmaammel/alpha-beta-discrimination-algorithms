@@ -13,12 +13,12 @@
 
 bool getEventCoordinates(double posx, double posy, double posz, double rho, double z, double distance) {
     bool inRange = true;
-	if (posz < z-distance/1000 || posz > z+distance/1000) {
+	if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
     }
     double posrho = sqrt((posx*posx) + (posy*posy));
 	//if (posrho*posrho/36000000 < rho-0.056 || posrho*posrho/36000000 > rho+0.056) {
-	if (posrho < rho-distance/1000 || posrho > rho+distance/1000) {
+	if (posrho < rho-distance*1000 || posrho > rho+distance*1000) {
         inRange = false;
     }
 	return inRange;
