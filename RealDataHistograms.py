@@ -22,12 +22,39 @@ import os
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/RealDataValues.cpp+")
 
-rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
-zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
-
 alphaFilename = raw_input("Please enter the alpha filename:")
 betaFilename = raw_input("Please enter the beta filename:")
+inputType = raw_input("Please enter if you would like to type your own list for the rho and z coordinates or if you would like to use a square template ('list' OR 'square'):")
 
+rhoCoordinates = []
+zCoordinates = []
+distance = 1
+
+if inputType == "square"
+	squareLength = int(raw_input("Please enter the side length of your square:"))
+	distance = int(raw_input("Please enter the distance between the coordinates:))
+   	for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+		for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+			rhoCoordinates.extend(i)
+			zCoordinates.extend(j)
+		       
+if inputType == "list"
+	rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
+	zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
+	distance = int(raw_input("Please enter the distance between the coordinates:))
+				 
+xTicks = []
+yTicks = []
+
+for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance))
+	xTicks.append(min(rhoCoordinates) + (distance*i))
+				 
+for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance))
+	yTicks.append(min(zCoordinates) + (distance*i))
+		
+
+# rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
+# zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
 
 # set ratio Alpha/Beta
 ratio = 9
@@ -58,7 +85,7 @@ titles2 = []
 
 for i in range(0,17):
 
-	values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i]*1000, ratio)
+	values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i], ratio, distance)
 	
 	ClassifierYoudenArray.append(values[0])
 	ValueYoudenArray.append(values[1])
@@ -85,14 +112,9 @@ for i in range(0,8):
 	p.xlabel(r"$\rho^2/36$ coordinate")
 	p.ylabel(r"$z$ coordinate (m)")
 	p.title(titles[i])
-	p.xticks([0.112, 0.224, 0.336, 0.448, 0.560])
-	p.yticks([1.0, 2.0, 3.0, 4.0])
+	p.xticks(xTicks)
+	p.yticks(yTicks)
 	p.colorbar(label=colorbar[i])
-	if i == 0 or i == 1: p.clim(-0.008, 0.004)
-	if i == 2: p.clim(0.65, 0.75)
-	if i == 3: p.clim(20,50)
-	if i==4 or i==5: p.clim(0.7, 1.0)
-	if i==6 or i==7: p.clim(0.7, 1.0)
 	p.show()
 	p.savefig("SummaryPartialFillRealDataSkimmedBiPosReprocessed_{}.pdf".format(graphs2[i]))
 	p.clf()
