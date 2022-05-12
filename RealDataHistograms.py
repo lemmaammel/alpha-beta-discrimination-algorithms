@@ -31,27 +31,27 @@ zCoordinates = []
 distance = 1
 
 if inputType == "square"
-	squareLength = int(raw_input("Please enter the side length of your square:"))
-	distance = int(raw_input("Please enter the distance between the coordinates:))
-   	for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
-		for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
-			rhoCoordinates.extend(i)
-			zCoordinates.extend(j)
-		       
+        squareLength = int(raw_input("Please enter the side length of your square:"))
+        distance = int(raw_input("Please enter the distance between the coordinates:))
+        for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+                for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+                        rhoCoordinates.extend(i)
+                        zCoordinates.extend(j)
+                       
 if inputType == "list"
-	rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
-	zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
-	distance = int(raw_input("Please enter the distance between the coordinates:))
-				 
+        rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
+        zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
+        distance = int(raw_input("Please enter the distance between the coordinates:))
+                                 
 xTicks = []
 yTicks = []
 
 for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance))
-	xTicks.append(min(rhoCoordinates) + (distance*i))
-				 
+        xTicks.append(min(rhoCoordinates) + (distance*i))
+                                 
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance))
-	yTicks.append(min(zCoordinates) + (distance*i))
-		
+        yTicks.append(min(zCoordinates) + (distance*i))
+                
 
 # rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
 # zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
@@ -85,36 +85,36 @@ titles2 = []
 
 for i in range(0,17):
 
-	values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i], ratio, distance)
-	
-	ClassifierYoudenArray.append(values[0])
-	ValueYoudenArray.append(values[1])
-	ClassifierGeneralArray.append(values[2])
-	ValueGeneralArray.append(values[3])
-	AlphaRejectionYoudenArray.append(values[4])
-	BetaAcceptanceYoudenArray.append(values[5])
-	AlphaRejectionGeneralArray.append(values[6])
-	BetaAcceptanceGeneralArray.append(values[7])
+        values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i], ratio, distance)
+        
+        ClassifierYoudenArray.append(values[0])
+        ValueYoudenArray.append(values[1])
+        ClassifierGeneralArray.append(values[2])
+        ValueGeneralArray.append(values[3])
+        AlphaRejectionYoudenArray.append(values[4])
+        BetaAcceptanceYoudenArray.append(values[5])
+        AlphaRejectionGeneralArray.append(values[6])
+        BetaAcceptanceGeneralArray.append(values[7])
 
 for graph in graphs:
-	graph.extend([-100, -100, -100])
+        graph.extend([-100, -100, -100])
 
 rhoCoordinates.extend(0.392, 0.504, 0.504)
 zCoordinates.extend([4, 4, 3])
 
 for i in range(0,8):
-	p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((0.0,0.56),(0.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
+        p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((0.0,0.56),(0.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
 
-	for k in range(17):
-		array = graphs[i]
-		p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
+        for k in range(17):
+                array = graphs[i]
+                p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
 
-	p.xlabel(r"$\rho^2/36$ coordinate")
-	p.ylabel(r"$z$ coordinate (m)")
-	p.title(titles[i])
-	p.xticks(xTicks)
-	p.yticks(yTicks)
-	p.colorbar(label=colorbar[i])
-	p.show()
-	p.savefig("SummaryPartialFillRealDataSkimmedBiPosReprocessed_{}.pdf".format(graphs2[i]))
-	p.clf()
+        p.xlabel(r"$\rho^2/36$ coordinate")
+        p.ylabel(r"$z$ coordinate (m)")
+        p.title(titles[i])
+        p.xticks(xTicks)
+        p.yticks(yTicks)
+        p.colorbar(label=colorbar[i])
+        p.show()
+        p.savefig("SummaryPartialFillRealDataSkimmedBiPosReprocessed_{}.pdf".format(graphs2[i]))
+        p.clf()

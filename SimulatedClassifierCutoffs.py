@@ -28,16 +28,16 @@ filename = "summaryClassifierCutoffsPartial.csv"
 
 for loopvar in loopvars:
 
-	name1 =  "alphaFilename*".format(loopvar)
-	name2 = "betaFilename*".format(loopvar)
-	
-	values = r.AlphaRejectionInfo("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 1)
-	
-	currentRow = [loopvar, values[2]]
-	rows.append(currentRow)
+        name1 =  "alphaFilename*".format(loopvar)
+        name2 = "betaFilename*".format(loopvar)
+        
+        values = r.AlphaRejectionInfo("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 1)
+        
+        currentRow = [loopvar, values[2]]
+        rows.append(currentRow)
 
 with open(filename, "w") as csvfile:
-	csvwriter = csv.writer(csvfile)
-	csvwriter.writerow(fields)
-	csvwriter.writerows(rows)
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(fields)
+        csvwriter.writerows(rows)
 
