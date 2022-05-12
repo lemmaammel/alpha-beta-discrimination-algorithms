@@ -11,19 +11,20 @@
 #include <cmath>
 #include <iostream>
 
-bool getEventCoordinates(double posx, double posy, double posz, double rho, double z) {
+bool getEventCoordinates(double posx, double posy, double posz, double rho, double z, double distance) {
     bool inRange = true;
-	if (posz < z-500 || posz > z+500) {
+	if (posz < z-distance/1000 || posz > z+distance/1000) {
         inRange = false;
     }
     double posrho = sqrt((posx*posx) + (posy*posy));
-	if (posrho*posrho/36000000 < rho-0.056 || posrho*posrho/36000000 > rho+0.056) {
+	//if (posrho*posrho/36000000 < rho-0.056 || posrho*posrho/36000000 > rho+0.056) {
+	if (posrho < rho-distance/1000 || posrho > rho+distance/1000) {
         inRange = false;
     }
 	return inRange;
 }
 
-TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int style) {
+TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int style, double distance) {
 
 	TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
 	c1->cd();
@@ -51,7 +52,7 @@ TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int styl
             		continue;
         	}
 
-		if(getEventCoordinates(posx, posy,posz, rho, z)) {
+		if(getEventCoordinates(posx, posy,posz, rho, z, distance)) {
 			histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
 		}
 	}
@@ -92,9 +93,9 @@ void nHitHistogramRealDataNew(std::string filename, std::string filename2, doubl
 }
 
 
-double* rejectionInfo(char* filename, char* filename2, double rho, double z, double ratio) {
-	TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, 1);
-	TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, 1);
+double* rejectionInfo(char* filename, char* filename2, double rho, double z, double ratio, double distance) {
+	TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, 1, distance);
+	TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, 1, distance);
 
 	//cut selection histograms
 	TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 100, -0.1, 0.1);
