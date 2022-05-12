@@ -22,11 +22,27 @@ import findRatio as f
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro(".SimulatedDataValues.cpp+")
 
-rhoCoordinates = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4]
-zCoordinates = [2, 3, 4, 2, 3, 4, 2, 3, 4, 2, 3, 2]
-
 alphaFilename = raw_input("Please enter the alpha filename, leaving off the '.root' extension:")
 betaFilename = raw_input("Please enter the beta filename, leaving off the '.root' extension:")
+
+inputType = raw_input("Please enter if you would like to type your own list for the rho and z coordinates or if you would like to use a square template ('list' OR 'square'):")
+
+rhoCoordinates = []
+zCoordinates = []
+distance = 1
+
+if inputType == "square"
+	squareLength = int(raw_input("Please enter the side length of your square:"))
+	distance = int(raw_input("Please enter the distance between the coordinates:))
+   	for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+		for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
+			rhoCoordinates.extend(i)
+			zCoordinates.extend(j)
+		       
+if inputType == "list"
+	rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
+	zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
+	distance = int(raw_input("Please enter the distance between the coordinates:))
 
 # set ratio Alpha/Beta
 #ratio = f.findRatio(0.78,0.78)
@@ -53,7 +69,7 @@ for i in range(0, len(rhoCoordinates)):
 	alphaFile = "{}*".format(alphaFilename)
 	betaFile =  "{}*".format(betaFilename)
    
-	values = r.rejectionInfo("{}.root".format(alphaFile), "{}.root".format(betaFile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i])
+	values = r.rejectionInfo("{}.root".format(alphaFile), "{}.root".format(betaFile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i], distance)
 	
 	ClassifierYoudenArray.append(values[0])
 	ValueYoudenArray.append(values[1])
@@ -89,13 +105,6 @@ for i in range(0,12):
 	p.ylabel(r"$z$ coordinate (m)")
 	p.title(titles[i])
 	p.colorbar(label=colorbar[i])
-	if i == 0 or i == 1: p.clim(0.009, 0.012)
-	if i == 2: p.clim(0.85, 1.01)
-	if i == 3: p.clim(85,100)
-	if i==4 or i==6: p.clim(0.1, 0.4)
-	if i==5 or i==7: p.clim(0.95, 1.0)
-	if(i==8 or i==9): p.clim(-0.01, 0.01)
-	else: p.clim(240,250)
 	p.show()
 	p.savefig("partialFillPDFs/SummaryPartialFill{}.pdf".format(graphs2[i]))
 	p.clf()
