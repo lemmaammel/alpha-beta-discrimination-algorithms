@@ -17,7 +17,7 @@
 #include <string>
 #include <iostream>
 
-bool getEventCoordinates(double posx, double posy, double posz, double rho, double z, distance) {
+bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
@@ -31,7 +31,11 @@ bool getEventCoordinates(double posx, double posy, double posz, double rho, doub
 
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
 // histogramType = "alpha&beta", "alpha", "beta"
-TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className, const std::string& classification, const std::string& histogramType = "alpha&beta", double rho = 100.0, double z = 100.0, double distance = 1.0) {
+TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className,
+                    const std::string& classification, const std::string& histogramType = "alpha&beta",
+                    const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
+                    const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1) {
 
     // create canvas to draw the histogram on
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
@@ -42,7 +46,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
     if(histogramType.contains("alpha")) {
         // create histogram for alpha events
-        TH2D* alphaHistogram = new TH2D("#beta Events", "N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+        TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
         // customize aesthetic features and labels
         alphaHistogram->SetMarkerColor(4);
         alphaHistogram->SetMarkerStyle(20);
@@ -57,7 +61,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
     if(histogramType.contains("beta")) {
         // create histogram for beta events
-        TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", 100, 100, 1000, 100, -0.1, 0.1);
+        TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
         // customize aesthetic features and labels
         betaHistogram->SetMarkerColor(6);
         betaHistogram->SetMarkerStyle(20);
@@ -143,18 +147,12 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     legend->SetHeader("Legend");
 
     // draw relevant histograms on canvas and build legend
-    if (histogramType.contains("alpha") && histogramType.contains("beta")) {
-        alphaHistogram->Draw();
-        betaHistogram->Draw("same");
-        legend->AddEntry(alphaHistogram, "#alpha Events", "p");
-        legend->AddEntry(betaHistogram, "#beta Events", "p");
-    }
-    else if (histogramType.contains("alpha")) {
+    if (histogramType.contains("alpha")) {
         alphaHistogram->Draw();
         legend->AddEntry(alphaHistogram, "#alpha Events", "p");
     }
     else if (histogramType.contains("beta")) {
-        betaaHistogram->Draw();
+        betaaHistogram->Draw("same");
         legend->AddEntry(betaHistogram, "#beta Events", "p");
     }
 
@@ -173,7 +171,8 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 }
 
 // plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
-TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio) {
+TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
+                            const std::string& classname, const std::string& classification, const double ratio) {
     TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
     TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
 
@@ -272,7 +271,9 @@ TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& bet
 }
 
 // calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname, const std::string& classname, const std::string& classification, double ratio, double rhoCoordinate, double zCoordinate, double distance) {
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
+                                  const std::string& classname, const std::string& classification,
+                                  const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance) {
 
     TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha", distance);
     TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta", distance);
@@ -325,10 +326,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     double allBetas = analysisBetaHistogram->Integral();
 
     if (allAlphas==0) {
-        allAlphas = 0.000001;
+        allAlphas = 1e-15;
     }
     if (allBetas == 0) {
-        allBetas = 0.000001;
+        allBetas = 1e-15;
     }
 
     double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, 100, youdenClassifierBin, 100) / allAlphas;
