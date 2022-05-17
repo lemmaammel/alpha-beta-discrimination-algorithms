@@ -32,7 +32,7 @@ distance = 1
 
 if inputType == "square"
         squareLength = int(raw_input("Please enter the side length of your square:"))
-        distance = int(raw_input("Please enter the distance between the coordinates:))
+        distance = int(raw_input("Please enter the distance between the coordinates:"))
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
                 for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
                         rhoCoordinates.extend(i)
@@ -41,7 +41,7 @@ if inputType == "square"
 if inputType == "list"
         rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
         zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
-        distance = int(raw_input("Please enter the distance between the coordinates:))
+        distance = int(raw_input("Please enter the distance between the coordinates:"))
                                  
 xTicks = []
 yTicks = []

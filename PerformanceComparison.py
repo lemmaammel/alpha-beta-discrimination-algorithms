@@ -3,7 +3,7 @@
 #Useful generic python imports
 from __future__ import print_function
 from string import Template
-import os, sys, time, math
+import os, sys, time, math, csv
 import numpy as np
 from array import array
 import matplotlib as m
@@ -12,13 +12,9 @@ m.use('Agg')
 #Imports particularly important for our purposes
 import ROOT as r
 import rat
-import csv
-import math
 import matplotlib.pyplot as p
 import significantFigures as s
 import findRatio as f
-import os
-import csv
 
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/realDataValues.cpp+")
