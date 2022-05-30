@@ -20,18 +20,20 @@ import significantFigures as s
 import findRatio as f
 
 r.gROOT.SetBatch(1) 
-r.gROOT.LoadMacro("./SimulatedDataValues.cpp+")
+r.gROOT.LoadMacro("./RATDSValues.cpp+")
 
-alphaFilename = raw_input("Please enter the alpha filename, leaving off the '.root' extension:")
-betaFilename = raw_input("Please enter the beta filename, leaving off the '.root' extension:")
+parser = argparse.ArgumentParser()
+parser.add_argument('--alphafile', '-a', type = str, default = '', help = 'Alpha file to use (no ".root" extension)')
+parser.add_argument('--betafile', '-b', type = str, default = '', help = 'Beta file to use (no ".root" extension)')
+parser.add_argument('--shape', '-s', type = str, default = 'list', help = 'Shape for plot ("list" OR "square")')
 
-inputType = raw_input("Please enter if you would like to type your own list for the rho and z coordinates or if you would like to use a square template ('list' OR 'square'):")
+args = parser.parse_args()
 
 rhoCoordinates = []
 zCoordinates = []
 distance = 1
 
-if inputType == "square"
+if args.shape == "square"
         squareLength = int(raw_input("Please enter the side length of your square:"))
         distance = int(raw_input("Please enter the distance between the coordinates:"))
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
@@ -39,7 +41,7 @@ if inputType == "square"
                         rhoCoordinates.extend(i)
                         zCoordinates.extend(j)
                        
-if inputType == "list"
+if args.shape == "list"
         rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
         zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
         distance = int(raw_input("Please enter the distance between the coordinates:"))
@@ -63,13 +65,9 @@ titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden 
 graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance", "ClassifierAlphaArray", "NhitAlphaArray", "ClassifierBetaArray", "NhitBetaArray"]
 colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance", "Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", r"$N_{\mathrm{hit}}$ Value"]
 
-
 for i in range(0, len(rhoCoordinates)):
-
-        alphaFile = "{}*".format(alphaFilename)
-        betaFile =  "{}*".format(betaFilename)
    
-        values = r.rejectionInfo("{}.root".format(alphaFile), "{}.root".format(betaFile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i], distance)
+        values = r.rejectionInfo("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i], distance)
         
         ClassifierYoudenArray.append(values[0])
         ValueYoudenArray.append(values[1])
@@ -80,13 +78,13 @@ for i in range(0, len(rhoCoordinates)):
         AlphaRejectionGeneralArray.append(values[6])
         BetaAcceptanceGeneralArray.append(values[7])
         
-        htot = r.NhitHistogram("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alpha")
-        htot2 = r.NhitHistogram("{}.root".format(name1), "{}.root".format(name2), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "beta")
+        alphaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alpha")
+        betaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "beta")
         
-        ClassifierAlphaArray.append(htot.GetMean(2))
-        NhitAlphaArray.append(htot.GetMean(1))
-        ClassifierBetaArray.append(htot2.GetMean(2))
-        NhitBetaArray.append(htot2.GetMean(1))
+        ClassifierAlphaArray.append(alphaHistogram.GetMean(2))
+        NhitAlphaArray.append(alphaHistogram.GetMean(1))
+        ClassifierBetaArray.append(betaHistogram.GetMean(2))
+        NhitBetaArray.append(betaHistogram.GetMean(1))
 
 for graph in graphs:
         graph.extend([-100, -100, -100])
