@@ -173,6 +173,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 // plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
 TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
                             const std::string& classname, const std::string& classification, const double ratio) {
+    
     TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
     TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
 
