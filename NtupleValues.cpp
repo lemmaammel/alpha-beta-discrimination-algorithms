@@ -23,7 +23,7 @@ bool getCoordInRange(double posx, double posy, double posz, double rho, double z
     return inRange;
 }
 
-TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int style, double distance) {
+TH2D* nHitHistogram(std::string filename, double rho, double z, int style, double distance) {
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
 
@@ -70,7 +70,7 @@ TH2D* nHitHistogramRealData(std::string filename, double rho, double z, int styl
     return histogram;
 }
 
-void nHitHistogramRealDataNew(std::string filename, std::string filename2, double rho, double z, int style1, int style2) {
+void nHitHistogramComplete(std::string filename, std::string filename2, double rho, double z, int style1, int style2) {
     TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, style1);
     TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, style2);
 
