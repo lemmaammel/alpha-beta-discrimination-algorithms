@@ -18,6 +18,7 @@ import math
 import matplotlib.pyplot as p
 import significantFigures as s
 import findRatio as f
+import os
 
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("./RATDSValues.cpp+")
