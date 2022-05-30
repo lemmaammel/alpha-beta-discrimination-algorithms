@@ -51,8 +51,6 @@ std::vector<double> getRealEventCoordinates(const std::string& filename, const s
 std::vector<double> getSimulatedEventCoordinates(const std::string& filename, const std::string& fitname) {
     RAT::DU::DSReader dsReader(filename);
 
-    double averageXCoordinate = 0.0;
-    double averageYCoordinate = 0.0;
     double averageZCoordinate = 0.0;
     double averageRhoCoordinate = 0.0;
     size_t counter = 0;
@@ -87,11 +85,7 @@ std::vector<double> getSimulatedEventCoordinates(const std::string& filename, co
             RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
             TVector3 pos = fVertex.GetPosition();
 
-            averageXCoordinate += pos.X();
-            averageYCoordinate += pos.Y();
             averageZCoordinate += pos.Z();
-            //We want the average rho coordinate, not the rho coordinate corresponding
-            //to the average x and average y
             averageRhoCoordinate += pos.Perp();
             counter++;
         }
