@@ -13,6 +13,7 @@
 #include <TMath.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+#include <cmath> 
 
 #include <string>
 #include <iostream>
@@ -282,23 +283,48 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
     //cut selection histograms
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 100, -0.1, 0.1);
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", 100, -0.1, 0.1);
+    //TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 100, -0.1, 0.1);
+    //TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", 100, -0.1, 0.1);
+    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram.GetNbinsY(), analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
 
     double currentAlphaHits1 = 0;
     double currentAlphaHits2 = 0;
     double currentBetaHits = 0;
     double currentBetaHits2 = 0;
-    double currentX = -0.098;
+    //double currentX = -0.098;
+    double currentX = generalSelection.GetXaxis()->GetXmin();
 
     double youdenStatistic;
     double generalStatistic;
 
-    for (size_t k = 0; k < 100; k++) {
-        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, 100, k, 100);
-        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, 100, 1, k);
-        currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, k);
-        currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, k, 100);
+//     for (size_t k = 0; k < 100; k++) {
+//         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, 100, k, 100);
+//         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, 100, 1, k);
+//         currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, k);
+//         currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, k, 100);
+
+//         if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
+//             youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
+//             generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
+//         }
+//         else {
+//             youdenStatistic = 0;
+//             generalStatistic = 0;
+//         }
+
+//         //fill for cut selection stats
+//         youdenSelection->Fill(currentX, youdenStatistic);
+//         generalSelection->Fill(currentX, generalStatistic);
+
+//         currentX+= .002;
+//     }
+    
+    for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
+        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
+        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
+        currentBetaHits = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
+        currentBetaHits2 = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
 
         if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
             youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
@@ -313,7 +339,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         youdenSelection->Fill(currentX, youdenStatistic);
         generalSelection->Fill(currentX, generalStatistic);
 
-        currentX+= .002;
+        currentX+= (std::abs(youdenSelection.GetXaxis()->GetXmin() - youdenSelection.GetXaxis()->GetXmax()))/youdenSelection.getNbinsX();
     }
 
     double youdenClassifierBin = youdenSelection->GetMaximumBin();
