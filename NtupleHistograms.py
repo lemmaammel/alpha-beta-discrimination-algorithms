@@ -22,15 +22,18 @@ import os
 r.gROOT.SetBatch(1) 
 r.gROOT.LoadMacro("/data/snoplus/home/ammel/RealDataValues.cpp+")
 
-alphaFilename = raw_input("Please enter the alpha filename:")
-betaFilename = raw_input("Please enter the beta filename:")
-inputType = raw_input("Please enter if you would like to type your own list for the rho and z coordinates or if you would like to use a square template ('list' OR 'square'):")
+parser = argparse.ArgumentParser()
+parser.add_argument('--alphafile', '-a', type = str, default = '', help = 'Alpha file to use (no ".root" extension)')
+parser.add_argument('--betafile', '-b', type = str, default = '', help = 'Beta file to use (no ".root" extension)')
+parser.add_argument('--shape', '-s', type = str, default = 'list', help = 'Shape for plot ("list" OR "square")')
+
+args = parser.parse_args()
 
 rhoCoordinates = []
 zCoordinates = []
 distance = 1
 
-if inputType == "square"
+if args.shape == "square"
         squareLength = int(raw_input("Please enter the side length of your square:"))
         distance = int(raw_input("Please enter the distance between the coordinates:"))
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
@@ -38,7 +41,7 @@ if inputType == "square"
                         rhoCoordinates.extend(i)
                         zCoordinates.extend(j)
                        
-if inputType == "list"
+if args.shape == "list"
         rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
         zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
         distance = int(raw_input("Please enter the distance between the coordinates:"))
@@ -52,9 +55,6 @@ for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance))
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance))
         yTicks.append(min(zCoordinates) + (distance*i))
                 
-
-# rhoCoordinates = [0.056, 0.056, 0.056, 0.056, 0.165, 0.165, 0.165, 0.165, 0.280, 0.280, 0.280, 0.280, 0.392, 0.392, 0.392, 0.504, 0.504]
-# zCoordinates = [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 1, 2]
 
 # set ratio Alpha/Beta
 ratio = 9
@@ -83,9 +83,9 @@ colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "G
 
 titles2 = []
 
-for i in range(0,17):
+for i in range(0, len(rhoCoordinates)):
 
-        values = r.rejectionInfo(alphaFilename, betaFilename, rhoCoordinates[i], zCoordinates[i], ratio, distance)
+        values = r.rejectionInfo("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), rhoCoordinates[i], zCoordinates[i], ratio, distance)
         
         ClassifierYoudenArray.append(values[0])
         ValueYoudenArray.append(values[1])
