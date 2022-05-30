@@ -23,7 +23,7 @@ bool getCoordInRange(double posx, double posy, double posz, double rho, double z
     return inRange;
 }
 
-TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance) {
+TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance, std::string type = "partial") {
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
 
@@ -49,8 +49,9 @@ TH2D* NhitHistogram(std::string filename, double rho, double z, int style, doubl
         if (nhits < 0) {
                     continue;
         }
-
-        if(getCoordInRange(posx, posy,posz, rho, z, distance)) {
+        if(type == "full") {
+             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
+        else if(getCoordInRange(posx, posy,posz, rho, z, distance)) {
             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
         }
     }
