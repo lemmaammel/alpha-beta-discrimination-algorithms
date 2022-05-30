@@ -23,11 +23,15 @@ bool getCoordInRange(double posx, double posy, double posz, double rho, double z
     return inRange;
 }
 
-TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance, std::string type = "partial") {
+TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance, std::string type = "partial",
+                    const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1200,
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1)) {
+    
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
 
-    TH2D* histogram = new TH2D("Events", "N_{hit} Vs. Classification", 100, 100, 1200, 100, -0.1, 0.1);
+    TH2D* histogram = new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
+    
     histogram->SetMarkerColor(style);
     histogram->SetMarkerStyle(20);
 
