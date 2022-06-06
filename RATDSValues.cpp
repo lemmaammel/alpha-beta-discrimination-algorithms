@@ -13,13 +13,16 @@
 #include <TMath.h>
 #include <TCanvas.h>
 #include <TLegend.h>
-#include <cmath> 
 
+#include <cmath>
 #include <string>
 #include <iostream>
 
+enum histType { alphaHist = 1, betaHist = 2, bothHists = 3 };
+
 bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
+    //Should 1000 be hardcoded?
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
     }
@@ -31,9 +34,8 @@ bool getEventCoordinates(const double posx, const double posy, const double posz
 }
 
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
-// histogramType = "alpha&beta", "alpha", "beta"
 TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className,
-                    const std::string& classification, const std::string& histogramType = "alpha&beta",
+                    const std::string& classification, const histType type = bothHists,
                     const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
                     const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1) {
@@ -45,7 +47,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     // create map of histograms
     std::map<std::string, TH2D*> histFileMap;
 
-    if(histogramType.contains("alpha")) {
+    if (alphaHist || bothHists) {
         // create histogram for alpha events
         TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
         // customize aesthetic features and labels
@@ -60,7 +62,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
         histFileMap[alphaFile] = alphaHistogram;
     }
 
-    if(histogramType.contains("beta")) {
+    if (betaHist || bothHists) {
         // create histogram for beta events
         TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
         // customize aesthetic features and labels
@@ -86,6 +88,10 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
             //loop through all events in entries
             for (size_t j = 0; j < rDS.GetEVCount(); j++) {
+                //Ignore retriggers from residual detector light
+                if (j > 0) {
+                    break;
+                }
                 //get the ev
                 const RAT::DS::EV& rEV = rDS.GetEV(j);
 
@@ -129,16 +135,13 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
                 TVector3 pos = fVertex.GetPosition();
 
-                // we should think about whether we can remove these events in a more consistent way
-                // discard events from residual detector light
-                if(numberHits.GetCalPMTs().GetAllCount() > 25) {
-                    if(z == 100.0 && rho == 100.0) {
-                        it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-                    }
-                    else if(getEventCoordinates(sqrt(pos.X()*pos.X() + pos.Y()*pos.Y()), pos.Z(), rho, z, distance) {
-                        it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-                    }
-               }
+                //What is special about z = 100, rho = 100?
+                if(z == 100.0 && rho == 100.0) {
+                    it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+                }
+                else if(getEventCoordinates(sqrt(pos.X()*pos.X() + pos.Y()*pos.Y()), pos.Z(), rho, z, distance) {
+                    it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+                }
             }
         }
     }
@@ -148,11 +151,11 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     legend->SetHeader("Legend");
 
     // draw relevant histograms on canvas and build legend
-    if (histogramType.contains("alpha")) {
+    if (alphaHist || bothHists) {
         alphaHistogram->Draw();
         legend->AddEntry(alphaHistogram, "#alpha Events", "p");
     }
-    else if (histogramType.contains("beta")) {
+    else if (betaHist || bothHists) {
         betaaHistogram->Draw("same");
         legend->AddEntry(betaHistogram, "#beta Events", "p");
     }
@@ -163,7 +166,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     c1->Print("realDataNhitHistogram.pdf", "pdf");
 
     // return histograms
-    if (histogramType.contains("alpha")) {
+    if (alphaHist || bothHists) {
         return alphaHistogram;
     }
     else {
@@ -172,11 +175,12 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 }
 
 // plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
+//Make sure to propagate the binning changes to this function
 TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
                             const std::string& classname, const std::string& classification, const double ratio) {
-    
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha");
-    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta");
+
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist);
+    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist);
 
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
@@ -273,12 +277,17 @@ TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& bet
 }
 
 // calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
+//Make sure to propagate the binning changes to this function
+//We should also think about how to combine this function and the one above it
+//One option is to reimplement these functions in python since you can have multiple return values (so you could return the canvas and list of values)
+//and also since we don't directly access the root files in either of them (NhitHistogram does that)
+//They are also the same between the RATDS and ntuple file formats, so then we could have them only in one place
 std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
                                   const std::string& classname, const std::string& classification,
                                   const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance) {
 
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, "alpha", distance);
-    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, "beta", distance);
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist, distance);
+    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist, distance);
 
     double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
@@ -319,7 +328,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
 //         currentX+= .002;
 //     }
-    
+
     for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);

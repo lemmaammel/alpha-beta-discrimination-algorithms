@@ -29,17 +29,18 @@ args = parser.parse_args()
 
 r.gROOT.SetBatch(1) 
 
-if args.filetype == "ntuple"
-        r.gROOT.LoadMacro("./NtupleValues.cpp+")
-else if args.filetype == "ratds"
-        r.gROOT.LoadMacro("./RATDSValues.cpp+")
-else
-        raise Exception("Filetype must be either 'ntuple' OR 'ratds'")
+if args.filetype == "ntuple":
+    r.gROOT.LoadMacro("./NtupleValues.cpp+")
+elif args.filetype == "ratds":
+    r.gROOT.LoadMacro("./RATDSValues.cpp+")
+else:
+    raise Exception("Filetype must be either 'ntuple' OR 'ratds'")
 
 rhoCoordinates = []
 zCoordinates = []
 distance = 1
 
+#We discussed some ways to reimplement this on Thursday
 if args.shape == "square"
         squareLength = int(raw_input("Please enter the side length of your square:"))
         distance = int(raw_input("Please enter the distance between the coordinates:"))
@@ -63,6 +64,7 @@ for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance))
         yTicks.append(min(zCoordinates) + (distance*i))
                 
 
+#We can make the ratio an argument with argparse
 # set ratio Alpha/Beta
 ratio = 9
 ratio2 = str(s.significantFigures(ratio,3)).replace(".","-")
