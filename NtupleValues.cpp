@@ -1,12 +1,10 @@
 // contains functions to generate scatterplots of real alpha and beta events, find the optimal cutoff values, and calculate the data relevant to those values
-
-#include <TROOT.h>
 #include <TFile.h>
 #include <TTree.h>
 #include <TH2D.h>
-#include <TMath.h>
 #include <TCanvas.h>
 #include <TLegend.h>
+
 #include <string>
 #include <cmath>
 #include <iostream>
@@ -26,12 +24,12 @@ bool getCoordInRange(double posx, double posy, double posz, double rho, double z
 TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance, std::string type = "partial",
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1200,
                     const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1)) {
-    
+
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
 
     TH2D* histogram = new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
-    
+
     histogram->SetMarkerColor(style);
     histogram->SetMarkerStyle(20);
 
@@ -51,10 +49,10 @@ TH2D* NhitHistogram(std::string filename, double rho, double z, int style, doubl
     for (size_t i = 0; i < k; i++) {
         t->GetEntry(i);
         if (nhits < 0) {
-                    continue;
+            continue;
         }
         if(type == "full") {
-             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
+            histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
         else if(getCoordInRange(posx, posy,posz, rho, z, distance)) {
             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
         }
