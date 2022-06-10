@@ -94,38 +94,36 @@ void NhitHistogramComplete(std::string filename, std::string filename2, double r
 }
 
 
-std::vector<double> rejectionInfo(char* filename, char* filename2, double rho, double z, double ratio, double distance) {
-    TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, 1, distance);
-    TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, 1, distance);
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const double rho, 
+                                  const double z, const double ratio, const double distance) {
+        
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, rho, z, 1, distance);
+    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, rho, z, 1, distance);
 
     //cut selection histograms
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 100, -0.1, 0.1);
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", 100, -0.1, 0.1);
+    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram.GetNbinsY(), analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
 
     double currentAlphaHits1 = 0;
     double currentAlphaHits2 = 0;
     double currentBetaHits = 0;
     double currentBetaHits2 = 0;
-    //Where does this value come from?
-    double currentX = -0.098;
+    double currentX = generalSelection.GetXaxis()->GetXmin();
 
     double youdenStatistic;
     double generalStatistic;
+    
+    for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
+        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
+        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
+        currentBetaHits = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
+        currentBetaHits2 = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
 
-    //We should think about how to have consistent bin sizes instead of having to hard code 100 in places
-    for (int k = 0; k < 100; k++) {
-        //We should pick more descriptive names than 1/2, maybe Acc/Rej
-        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, 100, k, 100);
-        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, 100, 1, k);
-        currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, k);
-        currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, k, 100);
-
-        if (!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
-            //The denominators for Youden should be constants, so we can likely avoid some computations
-            youdenStatistic = (currentBetaHits/(currentBetaHits+currentBetaHits2)) + (currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2)) - 1.0;
-            generalStatistic = (currentBetaHits)/sqrt(currentBetaHits+currentAlphaHits2);
+        if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
+            youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
+            generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
         }
-        else  {
+        else {
             youdenStatistic = 0;
             generalStatistic = 0;
         }
@@ -134,8 +132,7 @@ std::vector<double> rejectionInfo(char* filename, char* filename2, double rho, d
         youdenSelection->Fill(currentX, youdenStatistic);
         generalSelection->Fill(currentX, generalStatistic);
 
-        //Where does this value come from?
-        currentX+= .002;
+        currentX+= (std::abs(youdenSelection.GetXaxis()->GetXmin() - youdenSelection.GetXaxis()->GetXmax()))/youdenSelection.getNbinsX();
     }
 
     double youdenClassifierBin = youdenSelection->GetMaximumBin();
@@ -155,10 +152,10 @@ std::vector<double> rejectionInfo(char* filename, char* filename2, double rho, d
         allBetas = 1e-15;
     }
 
-    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, 100, youdenClassifierBin, 100) / allAlphas;
-    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, youdenClassifierBin) / allBetas;
-    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, 100, generalClassifierBin, 100) / allAlphas;
-    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, generalClassifierBin) /allBetas;
+    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), youdenClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
+    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, youdenClassifierBin) / allBetas;
+    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), generalClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
+    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, generalClassifierBin) /allBetas;
 
     std::vector<double> values;
     values.push_back(youdenClassifierMax);
