@@ -292,10 +292,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         allBetas = 1e-15;
     }
 
-    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, 100, youdenClassifierBin, 100) / allAlphas;
-    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, youdenClassifierBin) / allBetas;
-    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, 100, generalClassifierBin, 100) / allAlphas;
-    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, generalClassifierBin) /allBetas;
+    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), youdenClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
+    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, youdenClassifierBin) / allBetas;
+    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), generalClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
+    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, generalClassifierBin) /allBetas;
 
     std::vector<double> values;
     values.push_back(youdenClassifierMax);
