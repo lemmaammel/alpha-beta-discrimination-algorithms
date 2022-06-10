@@ -174,172 +174,54 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     }
 }
 
-// plot the change in alpha rejection, beta acceptance, the beta sample fraction, Youden's J Statistic, and a general statistic relative to classification cutoff
-//Make sure to propagate the binning changes to this function
-TCanvas* rejectionHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
-                            const std::string& classname, const std::string& classification, const double ratio) {
+// calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
+                                  const std::string& classname, const std::string& classification,
+                                  const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance, const bool printHistogram = false) {
 
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist);
-    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist);
-
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist, distance);
+    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist, distance);
+    
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
 
-    TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", 50, -0.1, 0.1);
-    TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", 50, -0.1, 0.1);
-    TH1D* betaSampleFraction = new TH1D("#beta Sample Fraction", "#beta Sample Fraction", 50, -0.1, 0.1);
+    double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
     //cut selection histograms
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 50, -0.1, 0.1);
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", 50, -0.1, 0.1);
-
-    alphaRejectionHistogram->SetLineColor(4);
-    betaAcceptanceHistogram->SetLineColor(6);
-    betaSampleFraction->SetLineColor(3);
-    youdenSelection->SetLineColor(2);
-    generalSelection->SetLineColor(7);
-
-    alphaRejectionHistogram->SetLineWidth(3);
-    betaAcceptanceHistogram->SetLineWidth(3);
-    betaSampleFraction->SetLineWidth(3);
-    youdenSelection->SetLineWidth(3);
-    generalSelection->SetLineWidth(3);
-
+    TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* betaSampleFraction = new TH1D("#beta Sample Fraction", "#beta Sample Fraction", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    
+    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram.GetNbinsY(), analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    
     double totalAlphaHits = ratio*analysisAlphaHistogram->Integral();
     double totalBetaHits = analysisBetaHistogram->Integral();
     double currentAlphaHits1 = 0;
     double currentAlphaHits2 = 0;
     double currentBetaHits = 0;
     double currentBetaHits2 = 0;
-    //Where does this number come from?
-    double currentX = -0.1;
-
-    double youdenStatistic;
-    double generalStatistic;
-
-    alphaRejectionHistogram->SetBinContent(-0.098, 0);
-
-    for (size_t k = 0;  k < 50; k++) {
-        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, 100, 2*k, 100);
-        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, 100, 1, 2*k);
-        currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, 2*k);
-        currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, 2*k, 100);
-
-
-        alphaRejectionHistogram->SetBinContent(k, currentAlphaHits1/totalAlphaHits);
-        betaAcceptanceHistogram->SetBinContent(k, currentBetaHits/totalBetaHits);
-
-        if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
-            betaSampleFraction->SetBinContent(k, currentBetaHits/(currentBetaHits+currentAlphaHits2));
-            youdenStatistic = (currentBetaHits/(currentBetaHits+currentBetaHits2)) + (currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2))-1;
-            generalStatistic = (currentBetaHits)/(sqrt(currentBetaHits+currentAlphaHits2)*50);
-        }
-        else {
-            betaSampleFraction->SetBinContent(k, 1.0);
-            youdenStatistic = 0;
-            generalStatistic = 0;
-        }
-
-        //fill for cut selection stats
-        youdenSelection->SetBinContent(k, youdenStatistic);
-        generalSelection->SetBinContent(k, generalStatistic);
-
-        currentX+=0.004;
-    }
-
-    alphaRejectionHistogram->GetYaxis()->SetTitle("#alpha Rejection / #beta Acceptance (%)");
-    alphaRejectionHistogram->GetYaxis()->SetTitleOffset(1.2);
-    alphaRejectionHistogram->GetXaxis()->SetTitle("Classification Cutoff");
-    alphaRejectionHistogram->GetXaxis()->SetLabelSize(0.03);
-    alphaRejectionHistogram->GetYaxis()->SetLabelSize(0.02);
-
-    alphaRejectionHistogram->Draw();
-    betaAcceptanceHistogram->Draw("same");
-    betaSampleFraction->Draw("same");
-    youdenSelection->Draw("same");
-    generalSelection->Draw("same");
-
-    // build a legend
-    TStyle* gStyle = new TStyle("", "");
-
-    TLegend *legend = new TLegend(0.1,0.7,0.3,0.9);
-    legend->SetHeader("Legend");
-    legend->AddEntry(alphaRejectionHistogram, "#alpha Rejection", "l");
-    legend->AddEntry(betaAcceptanceHistogram, "#beta Acceptance", "l");
-    legend->AddEntry(betaSampleFraction, "#beta Sample Fraction", "l");
-    legend->AddEntry(youdenSelection, "Youden's J Statistic", "l");
-    legend->AddEntry(generalSelection, "General Selection Statistic", "l");
-    legend->Draw();
-
-    c1->Print("AlphaRejectionHistogram_Revised.pdf", "pdf");
-
-    return c1;
-}
-
-// calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
-//Make sure to propagate the binning changes to this function
-//We should also think about how to combine this function and the one above it
-//One option is to reimplement these functions in python since you can have multiple return values (so you could return the canvas and list of values)
-//and also since we don't directly access the root files in either of them (NhitHistogram does that)
-//They are also the same between the RATDS and ntuple file formats, so then we could have them only in one place
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
-                                  const std::string& classname, const std::string& classification,
-                                  const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance) {
-
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist, distance);
-    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist, distance);
-
-    double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
-
-    //cut selection histograms
-    //TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", 100, -0.1, 0.1);
-    //TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", 100, -0.1, 0.1);
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram.GetNbinsY(), analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
-
-    double currentAlphaHits1 = 0;
-    double currentAlphaHits2 = 0;
-    double currentBetaHits = 0;
-    double currentBetaHits2 = 0;
-    //double currentX = -0.098;
     double currentX = generalSelection.GetXaxis()->GetXmin();
 
     double youdenStatistic;
     double generalStatistic;
-
-//     for (size_t k = 0; k < 100; k++) {
-//         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, 100, k, 100);
-//         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, 100, 1, k);
-//         currentBetaHits = analysisBetaHistogram->Integral(1, 100, 1, k);
-//         currentBetaHits2 = analysisBetaHistogram->Integral(1, 100, k, 100);
-
-//         if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
-//             youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
-//             generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
-//         }
-//         else {
-//             youdenStatistic = 0;
-//             generalStatistic = 0;
-//         }
-
-//         //fill for cut selection stats
-//         youdenSelection->Fill(currentX, youdenStatistic);
-//         generalSelection->Fill(currentX, generalStatistic);
-
-//         currentX+= .002;
-//     }
 
     for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
         currentBetaHits = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
         currentBetaHits2 = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
+        
+        alphaRejectionHistogram->SetBinContent(k, currentAlphaHits1/totalAlphaHits);
+        betaAcceptanceHistogram->SetBinContent(k, currentBetaHits/totalBetaHits);
 
         if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
+            betaSampleFraction->SetBinContent(k, currentBetaHits/(currentBetaHits+currentAlphaHits2));
             youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
             generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
         }
         else {
+            betaSampleFraction->SetBinContent(k, 1.0);
             youdenStatistic = 0;
             generalStatistic = 0;
         }
@@ -349,6 +231,48 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         generalSelection->Fill(currentX, generalStatistic);
 
         currentX+= (std::abs(youdenSelection.GetXaxis()->GetXmin() - youdenSelection.GetXaxis()->GetXmax()))/youdenSelection.getNbinsX();
+    }
+    
+    if(printHistogram) {
+        
+         // customize aesthetics for histograms
+        alphaRejectionHistogram->SetLineColor(4);
+        betaAcceptanceHistogram->SetLineColor(6);
+        betaSampleFraction->SetLineColor(3);
+        youdenSelection->SetLineColor(2);
+        generalSelection->SetLineColor(7);
+
+        alphaRejectionHistogram->SetLineWidth(3);
+        betaAcceptanceHistogram->SetLineWidth(3);
+        betaSampleFraction->SetLineWidth(3);
+        youdenSelection->SetLineWidth(3);
+        generalSelection->SetLineWidth(3);
+        
+        alphaRejectionHistogram->GetYaxis()->SetTitle("#alpha Rejection / #beta Acceptance (%)");
+        alphaRejectionHistogram->GetYaxis()->SetTitleOffset(1.2);
+        alphaRejectionHistogram->GetXaxis()->SetTitle("Classification Cutoff");
+        alphaRejectionHistogram->GetXaxis()->SetLabelSize(0.03);
+        alphaRejectionHistogram->GetYaxis()->SetLabelSize(0.02);
+
+        alphaRejectionHistogram->Draw();
+        betaAcceptanceHistogram->Draw("same");
+        betaSampleFraction->Draw("same");
+        youdenSelection->Draw("same");
+        generalSelection->Draw("same");
+
+        // build a legend
+        TStyle* gStyle = new TStyle("", "");
+
+        TLegend *legend = new TLegend(0.1,0.7,0.3,0.9);
+        legend->SetHeader("Legend");
+        legend->AddEntry(alphaRejectionHistogram, "#alpha Rejection", "l");
+        legend->AddEntry(betaAcceptanceHistogram, "#beta Acceptance", "l");
+        legend->AddEntry(betaSampleFraction, "#beta Sample Fraction", "l");
+        legend->AddEntry(youdenSelection, "Youden's J Statistic", "l");
+        legend->AddEntry(generalSelection, "General Selection Statistic", "l");
+        legend->Draw();
+
+        c1->Print("AlphaRejectionHistogram_Revised.pdf", "pdf");
     }
 
     double youdenClassifierBin = youdenSelection->GetMaximumBin();
