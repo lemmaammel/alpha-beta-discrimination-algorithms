@@ -88,15 +88,17 @@ colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "G
 for i in range(0, len(rhoCoordinates)):
 
         if args.filetype == "ntuple"
-                values = r.rejectionInfo("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), rhoCoordinates[i], zCoordinates[i], ratio, distance)
-                alphaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), 0, 0, 0, "full")
-                betaHistogram = r.NhitHistogram("{}*.root".format(args.betafile), 0, 0, 0, "full")
+                alphaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), rhoCoordinates[i], zCoordinates[i], ratio, distance)
+                betaHistogram = r.NhitHistogram("{}*.root".format(args.betafile), rhoCoordinates[i], zCoordinates[i], ratio, distance)
+                values = rejectionInfo(alphaHistogram, betaHistogram, ratio)
+
         
         else if args.filetype == "ratds"
-                values = r.rejectionInfo("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", 9, rhoCoordinates[i], zCoordinates[i], distance)
-                alphaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alpha")
-                betaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "beta")
-                
+                                           alphaHist, rhoCoordinate, zCoordinate, distance
+                alphaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", alphaHist, rhoCoordinates[i], zCoordinates[i], distance)
+                betaHistogram = r.NhitHistogram("{}*.root".format(args.alphafile), "{}*.root".format(args.betafile), "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", betaHist, rhoCoordinates[i], zCoordinates[i], distance)
+                values = = rejectionInfo(alphaHistogram, betaHistogram, ratio)
+
 
         ClassifierYoudenArray.append(values[0])
         ValueYoudenArray.append(values[1])
