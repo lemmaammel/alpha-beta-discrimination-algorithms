@@ -38,7 +38,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                     const std::string& classification, const histType type = bothHists,
                     const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1) {
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false) {
 
     // create canvas to draw the histogram on
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
@@ -135,8 +135,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
                 TVector3 pos = fVertex.GetPosition();
 
-                //What is special about z = 100, rho = 100?
-                if(z == 100.0 && rho == 100.0) {
+                if(full) {
                     it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
                 }
                 else if(getEventCoordinates(sqrt(pos.X()*pos.X() + pos.Y()*pos.Y()), pos.Z(), rho, z, distance) {
