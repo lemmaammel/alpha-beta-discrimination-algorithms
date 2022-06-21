@@ -179,8 +179,8 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
                                   const std::string& classname, const std::string& classification,
                                   const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance, const bool printHistogram = false) {
 
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, fitname, classname, classification, alphaHist, distance);
-    TH2D* analysisBetaHistogram = NhitHistogram(betaFile, fitname, classname, classification, betaHist, distance);
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, alphaHist, rhoCoordinate, zCoordinate, distance);
+    TH2D* analysisBetaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, betaHist, rhoCoordinate, zCoordinate, distance);
     
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
