@@ -17,7 +17,6 @@ import math
 import matplotlib.pyplot as p
 import significantFigures as s
 import findRatio as f
-import os
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--filetype', '-a', type = str, default = '', help = 'File type of alpha and beta files ("ntuple" OR "ratds")')
@@ -40,30 +39,32 @@ rhoCoordinates = []
 zCoordinates = []
 distance = 1
 
-#We discussed some ways to reimplement this on Thursday
-if args.shape == "square"
-        squareLength = int(raw_input("Please enter the side length of your square:"))
-        distance = int(raw_input("Please enter the distance between the coordinates:"))
-        for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
-                for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance)
-                        rhoCoordinates.extend(i)
-                        zCoordinates.extend(j)
-                       
-if args.shape == "list"
-        rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
-        zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
-        distance = int(raw_input("Please enter the distance between the coordinates:"))
+#Let's convert all of these raw_inputs to argparse options
+if args.shape == "square":
+    squareLength = int(raw_input("Please enter the side length of your square:"))
+    distance = int(raw_input("Please enter the distance between the coordinates:"))
+    for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance):
+        for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance):
+            rhoCoordinates.extend(i)
+            zCoordinates.extend(j)
+    
+#Let's convert all of these raw_inputs to argparse options
+if args.shape == "list":
+    rhoCoordinates = list(map(int, raw_input("Please enter the rho coordinates in the form '3 2 3 4 8':").split()))
+    zCoordinates = list(map(int, raw_input("Please enter the z coordinates in the form '4 6 3 8 8':").split()))
+    distance = int(raw_input("Please enter the distance between the coordinates:"))
                                  
 xTicks = []
 yTicks = []
 
-for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance))
-        xTicks.append(min(rhoCoordinates) + (distance*i))
+for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
+    xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
-for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance))
-        yTicks.append(min(zCoordinates) + (distance*i))
+for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
+    yTicks.append(min(zCoordinates) + (distance*i))
                 
 
+#FIXME
 #We can make the ratio an argument with argparse
 # set ratio Alpha/Beta
 ratio = 9
@@ -137,11 +138,11 @@ for i in range(0,12):
         p.savefig("partialFillPDFs/SummaryPartialFill{}.pdf".format(graphs2[i]))
         p.clf()
 
-def rejectionInfo(alpha_hist, beta_hist, ratio)
-                                           
+def rejectionInfo(alpha_hist, beta_hist, ratio):
     alpha_histogram = alpha_hist
     beta_histogram = beta_hist                                       
-                                           
+
+    #Like in the other file let's report a separate mean for alphas and betas
     meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(alpha_histogram.Integral()+beta_histogram.Integral())
 
     # cut selection histograms
@@ -152,30 +153,26 @@ def rejectionInfo(alpha_hist, beta_hist, ratio)
     alpha_acceptance = 0
     beta_rejection = 0
     beta_acceptance = 0
-    x = general_histogram.GetXaxis().GetXmin()
 
     youden_statistic = 0
     general_statistic = 0
 
     for k in range(0, youden_histogram.GetNBinsX()):
-        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
         alpha_acceptance = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
+        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
         beta_acceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
         beta_rejection = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youdenSelection.GetNbinsY())
 
-        if !(beta_acceptance == 0 && alpha_rejection == 0)
+        if !(beta_acceptance == 0 && alpha_rejection == 0):
             youden_statistic = beta_acceptance/(beta_acceptance+beta_rejection) + alpha_rejection/(alpha_acceptance+alpha_rejection)
             general_statistic = beta_acceptance/sqrt(beta_acceptance+alpha_rejection)
-
-        else
+        else:
             youden_statistic = 0
-            general__statistic = 0
+            general_statistic = 0
 
         #fill for cut selection stats
-        youden_histogram.Fill(x, youden_statistic)
-        general_histogram.Fill(x, general_statistic)
-
-        x += abs(youden_histogram.GetXaxis().GetXmin() - youden_histogram.GetXaxis().GetXmax())/youden_histogram.getNbinsX()
+        youden_histogram.SetBinContent(k, youden_statistic)
+        general_histogram.SetBinContent(k, general_statistic)
     }
 
     youdenClassifierBin = youden_histogram.GetMaximumBin()
@@ -188,10 +185,10 @@ def rejectionInfo(alpha_hist, beta_hist, ratio)
     allAlphas = alpha_histogram.Integral()
     allBetas = beta_histogram.Integral()
 
-    if allAlphas==0
+    if allAlphas == 0:
         allAlphas = 1e-15
    
-    if allBetas == 0
+    if allBetas == 0:
         allBetas = 1e-15
 
     youdenAlphaRejection = alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), youdenClassifierBin, youden_histogram.GetNbinsY()) / allAlphas

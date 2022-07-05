@@ -94,9 +94,9 @@ void NhitHistogramComplete(std::string filename, std::string filename2, double r
 }
 
 
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const double rho, 
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const double rho,
                                   const double z, const double ratio, const double distance) {
-        
+
     TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, rho, z, 1, distance);
     TH2D* analysisBetaHistogram = NhitHistogram(betaFile, rho, z, 1, distance);
 
@@ -112,7 +112,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
     double youdenStatistic;
     double generalStatistic;
-    
+
     for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
@@ -172,6 +172,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     return values;
 }
 
+//Is this function still being used? If not we can delete it
 std::vector<double> cutPerformanceValues(std::string filename, std::string filename2, double rho, double z, double ratio, double cutValue1) {
     //Where do these numbers come from
     double cutValue = abs(cutValue1+0.1)/0.002;
@@ -240,6 +241,7 @@ std::vector<double> averageValues(std::string filename) {
             continue;
         }
         double posrho = sqrt(posx*posx + posy*posy);
+        //FIXME
         //We should make the valuewe check against flexible
         if (posrho < 0.0 || posrho > 5.0) {
             continue;
