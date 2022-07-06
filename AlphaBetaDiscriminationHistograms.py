@@ -16,9 +16,8 @@ import rat
 import csv
 import math
 import matplotlib.pyplot as p
-#import significantFigures as s
-#import findRatio as f
-import os
+import significantFigures as s
+import findRatio as f
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--filetype', '-f', type = str, default = '', help = 'File type of alpha and beta files ("ntuple" OR "ratds")')
@@ -60,17 +59,18 @@ if args.shape == "list":
         rhoCoordinates = args.rhoCoordinates
         zCoordinates = args.zCoordinates
 
-print(rhoCoordinates)                                 
-
 xTicks = []
 yTicks = []
 
 for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
-        xTicks.append(min(rhoCoordinates) + (distance*i))
+    xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
-        yTicks.append(min(zCoordinates) + (distance*i))
+    yTicks.append(min(zCoordinates) + (distance*i))
                 
+
+#FIXME
+#We can make the ratio an argument with argparse
 # set ratio Alpha/Beta
 ratio = 9
 
@@ -146,10 +146,11 @@ for i in range(0,12):
         p.clf()
 
 def rejectionInfo(alpha_hist, beta_hist, ratio):
-                                           
+
     alpha_histogram = alpha_hist
     beta_histogram = beta_hist                                       
-                                           
+
+    #Like in the other file let's report a separate mean for alphas and betas
     meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(alpha_histogram.Integral()+beta_histogram.Integral())
 
     # cut selection histograms
@@ -160,14 +161,13 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     alpha_acceptance = 0
     beta_rejection = 0
     beta_acceptance = 0
-    x = general_histogram.GetXaxis().GetXmin()
 
     youden_statistic = 0
     general_statistic = 0
 
     for k in range(0, youden_histogram.GetNBinsX()):
-        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
         alpha_acceptance = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
+        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
         beta_acceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
         beta_rejection = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youdenSelection.GetNbinsY())
 
@@ -177,14 +177,14 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
 
         else:
             youden_statistic = 0
-            general__statistic = 0
+            general_statistic = 0
 
         #fill for cut selection stats
         youden_histogram.Fill(x, youden_statistic)
         general_histogram.Fill(x, general_statistic)
 
         x += abs(youden_histogram.GetXaxis().GetXmin() - youden_histogram.GetXaxis().GetXmax())/youden_histogram.getNbinsX()
-    
+
 
     youdenClassifierBin = youden_histogram.GetMaximumBin()
     youdenClassifierMax = youden_histogram.GetXaxis().GetBinCenter(youdenClassifierBin)
@@ -196,7 +196,7 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     allAlphas = alpha_histogram.Integral()
     allBetas = beta_histogram.Integral()
 
-    if allAlphas==0:
+    if allAlphas == 0:
         allAlphas = 1e-15
    
     if allBetas == 0:

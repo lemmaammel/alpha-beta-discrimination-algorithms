@@ -22,6 +22,7 @@ enum histType { alphaHist = 1, betaHist = 2, bothHists = 3 };
 
 bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
+    //FIXME
     //Should 1000 be hardcoded?
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
@@ -191,6 +192,8 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
 
+    //FIXME
+    //We should probably report separate mean nhits for the two populations (alphas and betas)
     double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
     //cut selection histograms
@@ -238,9 +241,9 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
         currentX+= (std::abs(youdenSelection->GetXaxis()->GetXmin() - youdenSelection->GetXaxis()->GetXmax()))/youdenSelection->GetNbinsX();
     }
-    
+
     if(printHistogram) {
-        
+
          // customize aesthetics for histograms
         alphaRejectionHistogram->SetLineColor(4);
         betaAcceptanceHistogram->SetLineColor(6);
@@ -253,7 +256,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         betaSampleFraction->SetLineWidth(3);
         youdenSelection->SetLineWidth(3);
         generalSelection->SetLineWidth(3);
-        
+
         alphaRejectionHistogram->GetYaxis()->SetTitle("#alpha Rejection / #beta Acceptance (%)");
         alphaRejectionHistogram->GetYaxis()->SetTitleOffset(1.2);
         alphaRejectionHistogram->GetXaxis()->SetTitle("Classification Cutoff");
@@ -291,7 +294,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     double allAlphas = analysisAlphaHistogram->Integral();
     double allBetas = analysisBetaHistogram->Integral();
 
-    if (allAlphas==0) {
+    if (allAlphas == 0) {
         allAlphas = 1e-15;
     }
     if (allBetas == 0) {
