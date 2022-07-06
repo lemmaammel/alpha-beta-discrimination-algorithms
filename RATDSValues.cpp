@@ -36,10 +36,10 @@ bool getEventCoordinates(const double posx, const double posy, const double posz
 
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
 TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className,
-                    const std::string& classification, const histType type = bothHists,
+                    const std::string& classification, const std::string& type = "bothHists",
                     const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false) {
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = true) {
 
     // create canvas to draw the histogram on
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
@@ -48,10 +48,11 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     // create map of histograms
     std::map<std::string, TH2D*> histFileMap;
 
-    if (alphaHist || bothHists) {
-        // create histogram for alpha events
-        TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
-        // customize aesthetic features and labels
+    // create histogram for alpha events
+    TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
+
+    if (type=="alphaHist" || type=="bothHists") {
+	// customize aesthetic features and labels
         alphaHistogram->SetMarkerColor(4);
         alphaHistogram->SetMarkerStyle(20);
         alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
@@ -63,10 +64,11 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
         histFileMap[alphaFile] = alphaHistogram;
     }
 
-    if (betaHist || bothHists) {
-        // create histogram for beta events
-        TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
-        // customize aesthetic features and labels
+    // create histogram for beta events
+    TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
+        
+    if(type=="betaHist" || type=="bothHists") {
+	// customize aesthetic features and labels
         betaHistogram->SetMarkerColor(6);
         betaHistogram->SetMarkerStyle(20);
         betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
@@ -109,28 +111,29 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
                 // nHit value for calibrated hits
                 const RAT::DS::EV& numberHits = rDS.GetEV(j);
-
+		
                 // test position
-                if(!rEV.FitResultExists(fitname)) {
+                if(!rEV.FitResultExists(fitName)) {
                     continue;
                 }
-                if(rEV.GetFitResult(fitname).GetVertexCount() != 0) {
+                if(rEV.GetFitResult(fitName).GetVertexCount() != 0) {
+                   // continue;
+                }
+		if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsPosition()) {
                     continue;
                 }
-                if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsPosition()) {
+		
+                // consider changes about whether to require valid position and energy
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidPosition()) {
+                    continue;
+                }
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsEnergy()) {
+                    continue;
+                }
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidEnergy()) {
                     continue;
                 }
 
-                // consider changes about whether to require valid position and energy
-                if(!rEV.GetFitResult(fitname).GetVertex(0).ValidPosition()) {
-                    continue;
-                }
-                if(!rEV.GetFitResult(fitname).GetVertex(0).ContainsEnergy()) {
-                    continue;
-                }
-                if(!rEV.GetFitResult(fitname).GetVertex(0).ValidEnergy()) {
-                    continue;
-                }
                 RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
                 RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
 
@@ -139,7 +142,7 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                 if(full) {
                     it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
                 }
-                else if(getEventCoordinates(sqrt(pos.X()*pos.X() + pos.Y()*pos.Y()), pos.Z(), rho, z, distance) {
+                else if(getEventCoordinates(pos.X(), pos.Y(), pos.Z(), rho, z, distance)) {
                     it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
                 }
             }
@@ -151,13 +154,17 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
     legend->SetHeader("Legend");
 
     // draw relevant histograms on canvas and build legend
-    if (alphaHist || bothHists) {
+    if (alphaHist) {
         alphaHistogram->Draw();
         legend->AddEntry(alphaHistogram, "#alpha Events", "p");
     }
-    else if (betaHist || bothHists) {
-        betaaHistogram->Draw("same");
+    if (betaHist && !alphaHist) {
+        betaHistogram->Draw();
         legend->AddEntry(betaHistogram, "#beta Events", "p");
+    }
+    else if(bothHists) {
+	betaHistogram->Draw("same");
+	legend->AddEntry(betaHistogram, "#beta Events", "p");
     }
 
     legend->Draw();
@@ -179,9 +186,9 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
                                   const std::string& classname, const std::string& classification,
                                   const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance, const bool printHistogram = false) {
 
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, alphaHist, rhoCoordinate, zCoordinate, distance);
-    TH2D* analysisBetaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, betaHist, rhoCoordinate, zCoordinate, distance);
-
+    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, "alphaHist", rhoCoordinate, zCoordinate, distance);
+    TH2D* analysisBetaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, "betaHist", rhoCoordinate, zCoordinate, distance);
+    
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
 
@@ -190,36 +197,37 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
     //cut selection histograms
-    TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
-    TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
-    TH1D* betaSampleFraction = new TH1D("#beta Sample Fraction", "#beta Sample Fraction", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
+    TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
+    TH1D* betaSampleFraction = new TH1D("#beta Sample Fraction", "#beta Sample Fraction", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
+    
+    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
+    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram->GetNbinsY(), analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
+    
+    double totalAlphaHits = ratio*analysisAlphaHistogram->Integral();
+    double totalBetaHits = analysisBetaHistogram->Integral();
+    double currentAlphaHits1 = 0;
+    double currentAlphaHits2 = 0;
+    double currentBetaHits = 0;
+    double currentBetaHits2 = 0;
+    double currentX = generalSelection->GetXaxis()->GetXmin();
 
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram.GetNbinsY(),  analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram.GetNbinsY(), analysisAlphaHistogram.GetMinimum(), analysisAlphaHistogram.GetMaximum());
+    double youdenStatistic;
+    double generalStatistic;
 
-    double totalAlphaEvents = ratio*analysisAlphaHistogram->Integral();
-    double totalBetaEvents = analysisBetaHistogram->Integral();
-    double currentAlphaEventsAcc = 0;
-    double currentAlphaEventsRej = 0;
-    double currentBetaEventsAcc = 0;
-    double currentBetaEventsRej = 0;
+    for (int k = 0; k < youdenSelection->GetNbinsX(); k++) {
+        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), k, youdenSelection->GetNbinsY());
+        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, k);
+        currentBetaHits = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, k);
+        currentBetaHits2 = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), k, youdenSelection->GetNbinsY());
+        
+        alphaRejectionHistogram->SetBinContent(k, currentAlphaHits1/totalAlphaHits);
+        betaAcceptanceHistogram->SetBinContent(k, currentBetaHits/totalBetaHits);
 
-    double youdenStatistic = 0;
-    double generalStatistic = 0;
-
-    for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
-        currentAlphaEventsAcc = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
-        currentAlphaEventsRej = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
-        currentBetaEventsAcc = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
-        currentBetaEventsRej= analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
-
-        alphaRejectionHistogram->SetBinContent(k, currentAlphaEventsRej/totalAlphaEvents);
-        betaAcceptanceHistogram->SetBinContent(k, currentBetaEventsAcc/totalBetaEvents);
-
-        if(!(currentBetaEventsAcc == 0 && currentAlphaEventsAcc == 0)) {
-            betaSampleFraction->SetBinContent(k, currentBetaEventsAcc/(currentBetaEventsAcc+currentAlphaEventsAcc));
-            youdenStatistic = currentBetaEventsAcc/totalBetaEvents + currentAlphaEventsRej/totalAlphaEvents);
-            generalStatistic = currentBetaEventsAcc/sqrt(currentBetaEventsAcc+currentAlphaEventsAcc);
+        if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
+            betaSampleFraction->SetBinContent(k, currentBetaHits/(currentBetaHits+currentAlphaHits2));
+            youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
+            generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
         }
         else {
             betaSampleFraction->SetBinContent(k, 1.0);
@@ -228,8 +236,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         }
 
         //fill for cut selection stats
-        youdenSelection->SetBinContent(k, youdenStatistic);
-        generalSelection->SetBinContent(k, generalStatistic);
+        youdenSelection->Fill(currentX, youdenStatistic);
+        generalSelection->Fill(currentX, generalStatistic);
+
+        currentX+= (std::abs(youdenSelection->GetXaxis()->GetXmin() - youdenSelection->GetXaxis()->GetXmax()))/youdenSelection->GetNbinsX();
     }
 
     if(printHistogram) {
@@ -291,10 +301,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         allBetas = 1e-15;
     }
 
-    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), youdenClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
-    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, youdenClassifierBin) / allBetas;
-    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), generalClassifierBin, youdenSelection.GetNbinsY()) / allAlphas;
-    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, generalClassifierBin) /allBetas;
+    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), youdenClassifierBin, youdenSelection->GetNbinsY()) / allAlphas;
+    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, youdenClassifierBin) / allBetas;
+    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), generalClassifierBin, youdenSelection->GetNbinsY()) / allAlphas;
+    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, generalClassifierBin) /allBetas;
 
     std::vector<double> values;
     values.push_back(youdenClassifierMax);
