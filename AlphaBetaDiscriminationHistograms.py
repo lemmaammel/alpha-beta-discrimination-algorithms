@@ -28,10 +28,12 @@ parser.add_argument('--rhoCoordinates', '-r', type = int, nargs='+', help = 'Lis
 parser.add_argument('--zCoordinates', '-z', type = int, nargs='+', help = 'List of z coordinates')
 parser.add_argument('--distance', '-d', type = int, default = 1, help = 'Distance between coordinates')
 parser.add_argument('--sideLength', '-l', type = int, help = 'Side length of square')
+parser.add_argument('--ratio', '-ra', type = float, default = 1, help = 'Ratio of alpha events to beta events')
 
 args = parser.parse_args()
 alphaFile = "{}*.root".format(args.alphafile)
 betaFile = "{}*.root".format(args.betafile)
+ratio = args.ratio
 
 print(alphaFile)
 
@@ -67,12 +69,6 @@ for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
                                  
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
     yTicks.append(min(zCoordinates) + (distance*i))
-                
-
-#FIXME
-#We can make the ratio an argument with argparse
-# set ratio Alpha/Beta
-ratio = 9
 
 ClassifierYoudenArray = []
 ValueYoudenArray = []
