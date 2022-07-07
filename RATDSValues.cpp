@@ -192,10 +192,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
 
-    //FIXME
-    //We should probably report separate mean nhits for the two populations (alphas and betas)
-    double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
+    double meanNhitAlpha = analysisAlphaHistogram->GetMean(1)/analysisAlphaHistogram->Integral();
+    double meanNhitBeta = analysisBetaHistogram->GetMean(1)/analysisBetaHistogram->Integral();
 
+	
     //cut selection histograms
     TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
     TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
@@ -244,7 +244,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
     if(printHistogram) {
 
-         // customize aesthetics for histograms
+        // customize aesthetics for histograms
         alphaRejectionHistogram->SetLineColor(4);
         betaAcceptanceHistogram->SetLineColor(6);
         betaSampleFraction->SetLineColor(3);
@@ -315,7 +315,9 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     values.push_back(youdenBetaAcceptance);
     values.push_back(generalAlphaRejection);
     values.push_back(generalBetaAcceptance);
-    values.push_back(meanNhit);
+    values.push_back(meanNhitAlpha);
+    values.push_back(meanNhitBeta);
+
 
     return values;
 }
