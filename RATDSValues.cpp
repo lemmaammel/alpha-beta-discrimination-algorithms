@@ -22,8 +22,6 @@ enum histType { alphaHist = 1, betaHist = 2, bothHists = 3 };
 
 bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
-    //FIXME
-    //Should 1000 be hardcoded?
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
     }
