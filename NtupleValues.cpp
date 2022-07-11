@@ -172,51 +172,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     return values;
 }
 
-//Is this function still being used? If not we can delete it
-std::vector<double> cutPerformanceValues(std::string filename, std::string filename2, double rho, double z, double ratio, double cutValue1) {
-    //Where do these numbers come from
-    double cutValue = abs(cutValue1+0.1)/0.002;
-    if (cutValue > 100) {
-        cutValue = 100;
-    }
-    if (cutValue < 0) {
-        cutValue = 0;
-    }
-
-    TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, ratio);
-    TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, ratio);
-
-    double alphaHits = double(ratio)*(analysisAlphaHistogram->Integral(1, 100, cutValue, 100));
-    double alphaHits2 = double(ratio)*(analysisAlphaHistogram->Integral(1, 100, 1, cutValue));
-    double betaHits = analysisBetaHistogram->Integral(1, 100, 1, cutValue);
-    double betaHits2 = analysisBetaHistogram->Integral(1, 100, cutValue, 100);
-
-    double youdenCutValue = (betaHits/(betaHits+betaHits2)) + (alphaHits/(alphaHits+alphaHits2)) - double(1);
-    double generalCutValue = (betaHits)/sqrt(betaHits+alphaHits2);
-
-    double allAlphas = analysisAlphaHistogram->Integral(1,100,1,100);
-    double allBetas = analysisBetaHistogram->Integral(1,100,1,100);
-
-    if (allAlphas==0) {
-        allAlphas = 1e-15;
-    }
-    if (allBetas==0) {
-        allBetas = 1e-15;
-    }
-
-    double alphaRejection = analysisAlphaHistogram->Integral(1, 100, cutValue, 100) / allAlphas;
-    double betaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, cutValue) / allBetas;
-
-    std::vector<double> values;
-    values.push_back(youdenCutValue);
-    values.push_back(generalCutValue);
-    values.push_back(alphaRejection)
-    values.push_back(betaRejection);
-
-    return values;
-}
-
-std::vector<double> averageValues(std::string filename) {
+std::vector<double> averageValues(std::string filename, const double rho_radius = 5.0, const double z_radius) {
     TFile *f = TFile::Open(filename.c_str());
     TTree *t = (TTree*)f->Get("output");
 
@@ -241,12 +197,10 @@ std::vector<double> averageValues(std::string filename) {
             continue;
         }
         double posrho = sqrt(posx*posx + posy*posy);
-        //FIXME
-        //We should make the valuewe check against flexible
-        if (posrho < 0.0 || posrho > 5.0) {
+        if (posrho < -rho_radius || posrho > rho_radius) {
             continue;
         }
-        if(posz < -5.0 || posz > 5.0) {
+        if(posz < -z_radius || posz > z_radius) {
             continue;
         }
 
