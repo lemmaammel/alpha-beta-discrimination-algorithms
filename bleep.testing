@@ -156,19 +156,19 @@ titles = ["Youden Classifier Cut Value","General Classifier Cut Value", "Youden 
 graphs2 = ["YoudenClassifierCut", "GeneralClassifierCut", "YoudenCutValue", "GeneralCutValue", "YoudenAlphaRejection", "YoudenBetaAcceptance", "GeneralAlphaRejection", "GeneralBetaAcceptance", "ClassifierAlphaArray", "NhitAlphaArray", "ClassifierBetaArray", "NhitBetaArray"]
 colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "General Statistic Value", r"$\alpha$ Rejection", r"$\beta$ Acceptance", r"$\alpha$ Rejection", r"$\beta$ Acceptance", "Classifier Value", r"$N_{\mathrm{hit}}$ Value", "Classifier Value", r"$N_{\mathrm{hit}}$ Value"]
 
-alphaHistograms = []
-betaHistograms = []
+for i in range(0, len(rhoCoordinates)):
 
-if args.filetype == "ntuple":
-        alphaHistograms = r.NhitHistograms(alphaFile, rhoCoordinates, zCoordinates, ratio, distance)
-        betaHistograms = r.NhitHistograms(betaFile, rhoCoordinates, zCoordinates, ratio, distance)
-elif args.filetype == "ratds":
-        alphaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alphaHist", rhoCoordinates, zCoordinates, distance)
-        betaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "betaHist", rhoCoordinates, zCoordinates, distance)
+        if args.filetype == "ntuple":
+                alphaHistogram = r.NhitHistogram(alphaFile, rhoCoordinates[i], zCoordinates[i], ratio, distance)
+                betaHistogram = r.NhitHistogram(betaFile, rhoCoordinates[i], zCoordinates[i], ratio, distance)
+                values = rejectionInfo(alphaHistogram, betaHistogram, ratio)
 
+        
+        elif args.filetype == "ratds":
+                alphaHistogram = r.NhitHistogram(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alphaHist", rhoCoordinates[i], zCoordinates[i], distance)
+                betaHistogram = r.NhitHistogram(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "betaHist", rhoCoordinates[i], zCoordinates[i], distance)
+                values = rejectionInfo(alphaHistogram, betaHistogram, ratio)
 
-for i in range(0, len(alphaHistograms)):
-        values = rejectionInfo(alphaHistograms[i], betaHistograms[i], ratio)
 
         ClassifierYoudenArray.append(values[0])
         ValueYoudenArray.append(values[1])

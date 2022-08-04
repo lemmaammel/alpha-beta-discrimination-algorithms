@@ -23,7 +23,7 @@ bool getCoordInRange(double posx, double posy, double posz, double rho, double z
 
 TH2D* NhitHistogram(std::string filename, double rho, double z, int style, double distance, std::string type = "partial",
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1200,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1)) {
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1) {
 
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
@@ -53,6 +53,7 @@ TH2D* NhitHistogram(std::string filename, double rho, double z, int style, doubl
         }
         if(type == "full") {
             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
+        }
         else if(getCoordInRange(posx, posy,posz, rho, z, distance)) {
             histogram->Fill(nhits, berkeleyAlphaBeta/nhits);
         }
@@ -71,6 +72,46 @@ TH2D* NhitHistogram(std::string filename, double rho, double z, int style, doubl
     c1->Print("realDataHistogramClassificationNhit2.pdf", "pdf");
 
     return histogram;
+}
+
+std::vector<TH2D*> NhitHistograms(std::string filename, double rho[], double z[], int style, double distance,
+                    const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1200,
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1) {
+
+    std::vector<TH2D*> histograms;
+
+    for(size_t i = 0; i < sizeof(rho); i++) {
+        histograms.push_back(new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
+    }
+
+    TFile *f = TFile::Open(filename.c_str());
+    TTree *t = (TTree*)f->Get("output");
+
+    double posx, posy, posz, berkeleyAlphaBeta;
+    int nhits;
+    bool fitValid;
+    t->SetBranchAddress("posx", &posx);
+    t->SetBranchAddress("posy", &posy);
+    t->SetBranchAddress("posz", &posz);
+    t->SetBranchAddress("berkeleyAlphaBeta", &berkeleyAlphaBeta);
+    t->SetBranchAddress("nhits", &nhits);
+    size_t k = t->GetEntries();
+
+    for (size_t i = 0; i < k; i++) {
+        t->GetEntry(i);
+        if (nhits < 0) {
+            continue;
+        }
+        for(size_t i = 0; i < sizeof(rho); i++) {
+            if(getCoordInRange(posx, posy, posz, rho[i], z[i], distance)) {
+                histograms[i]->Fill(nhits, berkeleyAlphaBeta/nhits);
+            }
+        }
+    }
+
+    f->Close();
+
+    return histograms;
 }
 
 void NhitHistogramComplete(std::string filename, std::string filename2, double rho, double z, int style1, int style2) {
