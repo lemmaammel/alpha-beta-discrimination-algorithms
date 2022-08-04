@@ -22,6 +22,7 @@ enum histType { alphaHist = 1, betaHist = 2, bothHists = 3 };
 
 bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
+    //Should 1000 be hardcoded?
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
     }
@@ -37,7 +38,9 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                     const std::string& classification, const std::string& type = "bothHists",
                     const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = true) {
+                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false) {
+
+    cout << alphaFile;
 
     // create canvas to draw the histogram on
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
@@ -86,23 +89,25 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
         for (size_t i = 0; i < currentReader.GetEntryCount(); i++) {
             const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
-
+	    
             //loop through all events in entries
             for (size_t j = 0; j < rDS.GetEVCount(); j++) {
                 //Ignore retriggers from residual detector light
                 if (j > 0) {
                     break;
                 }
+		
                 //get the ev
                 const RAT::DS::EV& rEV = rDS.GetEV(j);
 
                 if (!rEV.ClassifierResultExists(className)) {
                     continue;
                 }
+		
                 if (!rEV.GetClassifierResult(className).GetValid()) {
                     continue;
                 }
-
+		
                 // classifier result
                 RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
                 double cValue = cResult.GetClassification(classification);
@@ -121,7 +126,6 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
                     continue;
                 }
 		
-                // consider changes about whether to require valid position and energy
                 if(!rEV.GetFitResult(fitName).GetVertex(0).ValidPosition()) {
                     continue;
                 }
@@ -190,10 +194,8 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
     c1->cd();
 
-    double meanNhitAlpha = analysisAlphaHistogram->GetMean(1)/analysisAlphaHistogram->Integral();
-    double meanNhitBeta = analysisBetaHistogram->GetMean(1)/analysisBetaHistogram->Integral();
+    double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
 
-	
     //cut selection histograms
     TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
     TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
@@ -239,10 +241,10 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
         currentX+= (std::abs(youdenSelection->GetXaxis()->GetXmin() - youdenSelection->GetXaxis()->GetXmax()))/youdenSelection->GetNbinsX();
     }
-
+    
     if(printHistogram) {
-
-        // customize aesthetics for histograms
+        
+         // customize aesthetics for histograms
         alphaRejectionHistogram->SetLineColor(4);
         betaAcceptanceHistogram->SetLineColor(6);
         betaSampleFraction->SetLineColor(3);
@@ -254,7 +256,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
         betaSampleFraction->SetLineWidth(3);
         youdenSelection->SetLineWidth(3);
         generalSelection->SetLineWidth(3);
-
+        
         alphaRejectionHistogram->GetYaxis()->SetTitle("#alpha Rejection / #beta Acceptance (%)");
         alphaRejectionHistogram->GetYaxis()->SetTitleOffset(1.2);
         alphaRejectionHistogram->GetXaxis()->SetTitle("Classification Cutoff");
@@ -292,7 +294,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     double allAlphas = analysisAlphaHistogram->Integral();
     double allBetas = analysisBetaHistogram->Integral();
 
-    if (allAlphas == 0) {
+    if (allAlphas==0) {
         allAlphas = 1e-15;
     }
     if (allBetas == 0) {
@@ -313,9 +315,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     values.push_back(youdenBetaAcceptance);
     values.push_back(generalAlphaRejection);
     values.push_back(generalBetaAcceptance);
-    values.push_back(meanNhitAlpha);
-    values.push_back(meanNhitBeta);
-
+    values.push_back(meanNhit);
 
     return values;
 }
