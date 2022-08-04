@@ -3,7 +3,7 @@
 #Useful generic python imports
 from __future__ import print_function
 from string import Template
-import os, sys, time, math, csv, argparse, glob
+import os, sys, time, math
 import numpy as np
 from array import array
 import matplotlib as m
@@ -17,48 +17,49 @@ import csv
 import math
 import matplotlib.pyplot as p
 import significantFigures as s
-import findRatio as f
+#import findRatio as f
+import os
 
 def rejectionInfo(alpha_hist, beta_hist, ratio):
-
+                                           
     alpha_histogram = alpha_hist
     beta_histogram = beta_hist                                       
-
-    #Like in the other file let's report a separate mean for alphas and betas
+                                           
     meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(alpha_histogram.Integral()+beta_histogram.Integral())
 
     # cut selection histograms
-    youden_histogram = TH1D("Youden's J Statistic", "Youden's J Statistic", alpha_histogram.GetNbinsY(),  alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
-    general_histogram = TH1D("General Cut Statistic", "General Cut Statistic", alpha_histogram.GetNbinsY(), alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
+    youden_histogram = r.TH1D("Youden's J Statistic", "Youden's J Statistic", alpha_histogram.GetNbinsY(),  alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
+    general_histogram = r.TH1D("General Cut Statistic", "General Cut Statistic", alpha_histogram.GetNbinsY(), alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
                                            
     alpha_rejection = 0
     alpha_acceptance = 0
     beta_rejection = 0
     beta_acceptance = 0
+    x = general_histogram.GetXaxis().GetXmin()
 
     youden_statistic = 0
     general_statistic = 0
 
-    for k in range(0, youden_histogram.GetNBinsX()):
-        alpha_acceptance = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
+    for k in range(0, youden_histogram.GetNbinsX()):
         alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
+        alpha_acceptance = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
         beta_acceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
-        beta_rejection = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youdenSelection.GetNbinsY())
+        beta_rejection = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
 
-        if not (beta_acceptance == 0 and alpha_rejection == 0):
+        if not ((beta_acceptance == 0 and alpha_rejection == 0) or (beta_acceptance+beta_rejection == 0 or alpha_acceptance+alpha_rejection == 0)):
             youden_statistic = beta_acceptance/(beta_acceptance+beta_rejection) + alpha_rejection/(alpha_acceptance+alpha_rejection)
             general_statistic = beta_acceptance/sqrt(beta_acceptance+alpha_rejection)
 
         else:
             youden_statistic = 0
-            general_statistic = 0
+            general__statistic = 0
 
         #fill for cut selection stats
         youden_histogram.Fill(x, youden_statistic)
         general_histogram.Fill(x, general_statistic)
 
-        x += abs(youden_histogram.GetXaxis().GetXmin() - youden_histogram.GetXaxis().GetXmax())/youden_histogram.getNbinsX()
-
+        x += abs(youden_histogram.GetXaxis().GetXmin() - youden_histogram.GetXaxis().GetXmax())/youden_histogram.GetNbinsX()
+    
 
     youdenClassifierBin = youden_histogram.GetMaximumBin()
     youdenClassifierMax = youden_histogram.GetXaxis().GetBinCenter(youdenClassifierBin)
@@ -70,7 +71,7 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     allAlphas = alpha_histogram.Integral()
     allBetas = beta_histogram.Integral()
 
-    if allAlphas == 0:
+    if allAlphas==0:
         allAlphas = 1e-15
    
     if allBetas == 0:
@@ -82,8 +83,9 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     generalBetaAcceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, generalClassifierBin) /allBetas
 
     return [youdenClassifierMax, youdenNhitMax, generalClassifierMax, generalNhitMax, youdenAlphaRejection, youdenBetaAcceptance, generalAlphaRejection, generalBetaAcceptance, meanNhit]
-                 
-
+                                           
+                                           
+                                            
 parser = argparse.ArgumentParser()
 parser.add_argument('--filetype', '-f', type = str, default = '', help = 'File type of alpha and beta files ("ntuple" OR "ratds")')
 parser.add_argument('--alphafile', '-a', type = str, default = '', help = 'Alpha file to use (no ".root" extension)')
@@ -93,12 +95,10 @@ parser.add_argument('--rhoCoordinates', '-r', type = int, nargs='+', help = 'Lis
 parser.add_argument('--zCoordinates', '-z', type = int, nargs='+', help = 'List of z coordinates')
 parser.add_argument('--distance', '-d', type = int, default = 1, help = 'Distance between coordinates')
 parser.add_argument('--sideLength', '-l', type = int, help = 'Side length of square')
-parser.add_argument('--ratio', '-ra', type = float, default = 1, help = 'Ratio of alpha events to beta events')
 
 args = parser.parse_args()
 alphaFile = "{}*.root".format(args.alphafile)
 betaFile = "{}*.root".format(args.betafile)
-ratio = args.ratio
 
 print(alphaFile)
 
@@ -115,6 +115,7 @@ rhoCoordinates = []
 zCoordinates = []
 distance = args.distance
 
+#We discussed some ways to reimplement this on Thursday
 if args.shape == "square":
         squareLength = args.sideLength
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
@@ -126,14 +127,22 @@ if args.shape == "list":
         rhoCoordinates = args.rhoCoordinates
         zCoordinates = args.zCoordinates
 
+print(rhoCoordinates)                                 
+
 xTicks = []
 yTicks = []
 
 for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
-    xTicks.append(min(rhoCoordinates) + (distance*i))
+        xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
-    yTicks.append(min(zCoordinates) + (distance*i))
+        yTicks.append(min(zCoordinates) + (distance*i))
+                
+
+#We can make the ratio an argument with argparse
+# set ratio Alpha/Beta
+ratio = 9
+#ratio2 = str(s.significantFigures(ratio,3)).replace(".","-")
 
 ClassifierYoudenArray = []
 ValueYoudenArray = []
@@ -203,5 +212,5 @@ for i in range(0,12):
         p.yticks(yTicks)
         p.colorbar(label=colorbar[i])
         p.show()               
-        p.savefig("partialFillPDFsTEST/SummaryPartialFill{}.pdf".format(graphs2[i]))
+        p.savefig("SummaryPartialFill{}.pdf".format(graphs2[i]))
         p.clf()
