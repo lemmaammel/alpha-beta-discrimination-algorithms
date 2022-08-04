@@ -94,9 +94,9 @@ void NhitHistogramComplete(std::string filename, std::string filename2, double r
 }
 
 
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const double rho,
+std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const double rho, 
                                   const double z, const double ratio, const double distance) {
-
+        
     TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, rho, z, 1, distance);
     TH2D* analysisBetaHistogram = NhitHistogram(betaFile, rho, z, 1, distance);
 
@@ -112,7 +112,7 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
 
     double youdenStatistic;
     double generalStatistic;
-
+    
     for (size_t k = 0; k < youdenSelection.GetNbinsX(); k++) {
         currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), k, youdenSelection.GetNbinsY());
         currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection.GetNbinsX(), 1, k);
@@ -172,7 +172,50 @@ std::vector<double> rejectionInfo(const std::string& alphaFile, const std::strin
     return values;
 }
 
-std::vector<double> averageValues(std::string filename, const double rho_radius = 5.0, const double z_radius) {
+std::vector<double> cutPerformanceValues(std::string filename, std::string filename2, double rho, double z, double ratio, double cutValue1) {
+    //Where do these numbers come from
+    double cutValue = abs(cutValue1+0.1)/0.002;
+    if (cutValue > 100) {
+        cutValue = 100;
+    }
+    if (cutValue < 0) {
+        cutValue = 0;
+    }
+
+    TH2D* analysisAlphaHistogram = nHitHistogramRealData(filename, rho, z, ratio);
+    TH2D* analysisBetaHistogram = nHitHistogramRealData(filename2, rho, z, ratio);
+
+    double alphaHits = double(ratio)*(analysisAlphaHistogram->Integral(1, 100, cutValue, 100));
+    double alphaHits2 = double(ratio)*(analysisAlphaHistogram->Integral(1, 100, 1, cutValue));
+    double betaHits = analysisBetaHistogram->Integral(1, 100, 1, cutValue);
+    double betaHits2 = analysisBetaHistogram->Integral(1, 100, cutValue, 100);
+
+    double youdenCutValue = (betaHits/(betaHits+betaHits2)) + (alphaHits/(alphaHits+alphaHits2)) - double(1);
+    double generalCutValue = (betaHits)/sqrt(betaHits+alphaHits2);
+
+    double allAlphas = analysisAlphaHistogram->Integral(1,100,1,100);
+    double allBetas = analysisBetaHistogram->Integral(1,100,1,100);
+
+    if (allAlphas==0) {
+        allAlphas = 1e-15;
+    }
+    if (allBetas==0) {
+        allBetas = 1e-15;
+    }
+
+    double alphaRejection = analysisAlphaHistogram->Integral(1, 100, cutValue, 100) / allAlphas;
+    double betaAcceptance = analysisBetaHistogram->Integral(1, 100, 1, cutValue) / allBetas;
+
+    std::vector<double> values;
+    values.push_back(youdenCutValue);
+    values.push_back(generalCutValue);
+    values.push_back(alphaRejection)
+    values.push_back(betaRejection);
+
+    return values;
+}
+
+std::vector<double> averageValues(std::string filename) {
     TFile *f = TFile::Open(filename.c_str());
     TTree *t = (TTree*)f->Get("output");
 
@@ -197,10 +240,11 @@ std::vector<double> averageValues(std::string filename, const double rho_radius 
             continue;
         }
         double posrho = sqrt(posx*posx + posy*posy);
-        if (posrho < -rho_radius || posrho > rho_radius) {
+        //We should make the valuewe check against flexible
+        if (posrho < 0.0 || posrho > 5.0) {
             continue;
         }
-        if(posz < -z_radius || posz > z_radius) {
+        if(posz < -5.0 || posz > 5.0) {
             continue;
         }
 
@@ -220,5 +264,3 @@ std::vector<double> averageValues(std::string filename, const double rho_radius 
 
     return values;
 }
-
-
