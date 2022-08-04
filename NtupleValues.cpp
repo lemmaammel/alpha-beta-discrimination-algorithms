@@ -81,7 +81,7 @@ std::vector<TH2D*> NhitHistograms(std::string filename, double rho[], double z[]
     std::vector<TH2D*> histograms;
 
     for(size_t i = 0; i < sizeof(rho); i++) {
-        histograms.push_back(new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
+        histograms.push_back(new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax));
     }
 
     TFile *f = TFile::Open(filename.c_str());
