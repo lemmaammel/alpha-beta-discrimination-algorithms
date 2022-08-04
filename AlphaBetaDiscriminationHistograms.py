@@ -1,6 +1,6 @@
 # Generates histograms displaying the distribution of alpha rejection and beta acceptance values (among others) around the detector given real simulated data (NEW UNITS)
 
-#Useful generic python imports
+# Python imports
 from __future__ import print_function
 from string import Template
 import os, sys, time, math
@@ -9,17 +9,15 @@ from array import array
 import matplotlib as m
 import argparse
 m.use('Agg')
-
-#Imports particularly important for our purposes
 import ROOT as r
 import rat
 import csv
 import math
 import matplotlib.pyplot as p
 import significantFigures as s
-#import findRatio as f
 import os
 
+# Function that calculates relevant statistics from given alpha and beta event histograms
 def rejectionInfo(alpha_hist, beta_hist, ratio):
                                            
     alpha_histogram = alpha_hist
@@ -85,7 +83,7 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     return [youdenClassifierMax, youdenNhitMax, generalClassifierMax, generalNhitMax, youdenAlphaRejection, youdenBetaAcceptance, generalAlphaRejection, generalBetaAcceptance, meanNhit]
                                            
                                            
-                                            
+# Collects user input from the command line for files and customization                                
 parser = argparse.ArgumentParser()
 parser.add_argument('--filetype', '-f', type = str, default = '', help = 'File type of alpha and beta files ("ntuple" OR "ratds")')
 parser.add_argument('--alphafile', '-a', type = str, default = '', help = 'Alpha file to use (no ".root" extension)')
@@ -105,6 +103,7 @@ ratio = args.ratio
 
 r.gROOT.SetBatch(1) 
 
+# Depending on the filetype the user inputted, opens the corresponding c++ file
 if args.filetype == "ntuple":
     r.gROOT.LoadMacro("./NtupleValues.cpp+")
 elif args.filetype == "ratds":
@@ -116,6 +115,7 @@ rhoCoordinates = []
 zCoordinates = []
 distance = args.distance
 
+# Creates rho and z coordinate lists for histogram segmentation based on user input
 if args.shape == "square":
         squareLength = args.sideLength
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
@@ -130,6 +130,7 @@ if args.shape == "list":
 xTicks = []
 yTicks = []
 
+# Generates a list of x tick locations and y tick locations for histogram appearance
 for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
         xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
@@ -159,6 +160,7 @@ colorbar = ["Classifier Value", "Classifier Value", "Youden Statistic Value", "G
 alphaHistograms = []
 betaHistograms = []
 
+# Based on filetype, calls a c++ function to sort the events from the given files into seperate histograms for every coordinate
 if args.filetype == "ntuple":
         alphaHistograms = r.NhitHistograms(alphaFile, rhoCoordinates, zCoordinates, ratio, distance)
         betaHistograms = r.NhitHistograms(betaFile, rhoCoordinates, zCoordinates, ratio, distance)
@@ -197,6 +199,7 @@ for i in range(0,12):
                 array = graphs[i]
                 p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
 
+        # Aesthetic customization
         p.xlabel(r"$\rho$ coordinate")
         p.ylabel(r"$z$ coordinate (m)")
         p.title(titles[i])
