@@ -46,7 +46,7 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
 
         if not ((beta_acceptance == 0 and alpha_rejection == 0) or (beta_acceptance+beta_rejection == 0 or alpha_acceptance+alpha_rejection == 0)):
             youden_statistic = beta_acceptance/(beta_acceptance+beta_rejection) + alpha_rejection/(alpha_acceptance+alpha_rejection)
-            general_statistic = beta_acceptance/sqrt(beta_acceptance+alpha_rejection)
+            general_statistic = beta_acceptance/math.sqrt(beta_acceptance+alpha_rejection)
 
         else:
             youden_statistic = 0
@@ -111,8 +111,8 @@ elif args.filetype == "ratds":
 else:
     raise Exception("Filetype must be either 'ntuple' OR 'ratds'")
 
-rhoCoordinates = []
-zCoordinates = []
+rhoCoordinates = r.std.vector('double')()
+zCoordinates = r.std.vector('double')()
 distance = args.distance
 
 # Creates rho and z coordinate lists for histogram segmentation based on user input
@@ -120,13 +120,15 @@ if args.shape == "square":
         squareLength = args.sideLength
         for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
                 for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
-                        rhoCoordinates.append(i)
-                        zCoordinates.append(j)                
+                        rhoCoordinates.push_back(i)
+                        zCoordinates.push_back(j)                
 
 if args.shape == "list":
-        rhoCoordinates = args.rhoCoordinates
-        zCoordinates = args.zCoordinates
-
+	for i in args.rhoCoordinates:
+		rhoCoordinates.push_back(i)
+	for i in args.zCoordinates:
+		zCoordinates.push_back(i)
+        
 xTicks = []
 yTicks = []
 
@@ -162,12 +164,11 @@ betaHistograms = []
 
 # Based on filetype, calls a c++ function to sort the events from the given files into seperate histograms for every coordinate
 if args.filetype == "ntuple":
-        alphaHistograms = r.NhitHistograms(alphaFile, rhoCoordinates, zCoordinates, ratio, distance)
-        betaHistograms = r.NhitHistograms(betaFile, rhoCoordinates, zCoordinates, ratio, distance)
+        alphaHistograms = r.NhitHistograms(alphaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance)
+        betaHistograms = r.NhitHistograms(betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance)
 elif args.filetype == "ratds":
-        alphaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "alphaHist", rhoCoordinates, zCoordinates, distance)
-        betaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", "betaHist", rhoCoordinates, zCoordinates, distance)
-
+        alphaHistograms = r.NhitHistograms(alphaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance)
+        betaHistograms = r.NhitHistograms(betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance)
 
 for i in range(0, len(alphaHistograms)):
         values = rejectionInfo(alphaHistograms[i], betaHistograms[i], ratio)
@@ -181,16 +182,20 @@ for i in range(0, len(alphaHistograms)):
         AlphaRejectionGeneralArray.append(values[6])
         BetaAcceptanceGeneralArray.append(values[7])
                                           
-        ClassifierAlphaArray.append(alphaHistogram.GetMean(2))
-        NhitAlphaArray.append(alphaHistogram.GetMean(1))
-        ClassifierBetaArray.append(betaHistogram.GetMean(2))
-        NhitBetaArray.append(betaHistogram.GetMean(1))                              
+        ClassifierAlphaArray.append(alphaHistograms[i].GetMean(2))
+        NhitAlphaArray.append(alphaHistograms[i].GetMean(1))
+        ClassifierBetaArray.append(betaHistograms[i].GetMean(2))
+        NhitBetaArray.append(betaHistograms[i].GetMean(1))                              
 
 for graph in graphs:
         graph.extend([-100, -100, -100])
 
-rhoCoordinates.extend([3, 4, 4])
-zCoordinates.extend([4, 4, 4])
+rhoCoordinates.push_back(3)
+rhoCoordinates.push_back(4)
+rhoCoordinates.push_back(4)
+zCoordinates.push_back(4)
+zCoordinates.push_back(4)
+zCoordinates.push_back(4)
 
 for i in range(0,12):
         p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)

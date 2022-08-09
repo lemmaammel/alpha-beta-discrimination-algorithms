@@ -20,9 +20,8 @@
 
 enum histType { alphaHist = 1, betaHist = 2, bothHists = 3 };
 
-bool getEventCoordinates(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
+bool isInRange(const double posx, const double posy, const double posz, const double rho, const double z, const double distance) {
     bool inRange = true;
-    //Should 1000 be hardcoded?
     if (posz < z-distance*1000 || posz > z+distance*1000) {
         inRange = false;
     }
@@ -34,139 +33,122 @@ bool getEventCoordinates(const double posx, const double posy, const double posz
 }
 
 // draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
-TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, const std::string& className,
-                    const std::string& classification, const std::string& type = "bothHists",
-                    const double rho = 100.0, const double z = 100.0, const double distance = 1.0,
+std::vector<TH2D*> NhitHistograms(const std::string& alphaFile, const std::string& betaFile, const std::string& fitName, 
+                    const std::string& className, const std::string& classification, const std::string& type = "bothHists", 
+                    std::vector<double> rho, std::vector<double> z, const double distance = 1.0,
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
                     const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false) {
 
-    cout << alphaFile;
+    std::vector<TH2D*> alphaHistograms;
+    std::vector<TH2D*> betaHistograms;
+
+    // create map of histograms
+    std::map<std::string, std::vector<TH2D*>> histFileMap;
+
+    for(size_t i = 0; i < rho.size(); i++) {
+        alphaHistograms.push_back(new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax));
+        betaHistograms.push_back(new TH2D("#beta Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax));
+
+    }
 
     // create canvas to draw the histogram on
     TCanvas *c1 = new TCanvas("c1", "Classification Histogram", 200, 10, 1300, 1300);
     c1->cd();
 
-    // create map of histograms
-    std::map<std::string, TH2D*> histFileMap;
-
-    // create histogram for alpha events
-    TH2D* alphaHistogram = new TH2D("#alpha Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
-
     if (type=="alphaHist" || type=="bothHists") {
-	// customize aesthetic features and labels
-        alphaHistogram->SetMarkerColor(4);
-        alphaHistogram->SetMarkerStyle(20);
-        alphaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-        alphaHistogram->GetYaxis()->SetTitleOffset(1.2);
-        alphaHistogram->GetXaxis()->SetTitle("Number of Hits");
-        alphaHistogram->GetXaxis()->SetLabelSize(0.03);
-        alphaHistogram->GetYaxis()->SetLabelSize(0.02);
-        // add histogram to the map
-        histFileMap[alphaFile] = alphaHistogram;
+	    // customize aesthetic features and labels
+        for(size_t i = 0; i < rho.size(); i++) {
+            alphaHistograms[i]->SetMarkerColor(4);
+            alphaHistograms[i]->SetMarkerStyle(20);
+            alphaHistograms[i]->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+            alphaHistograms[i]->GetYaxis()->SetTitleOffset(1.2);
+            alphaHistograms[i]->GetXaxis()->SetTitle("Number of Hits");
+            alphaHistograms[i]->GetXaxis()->SetLabelSize(0.03);
+            alphaHistograms[i]->GetYaxis()->SetLabelSize(0.02);
+        }
+        histFileMap[alphaFile] = alphaHistograms;
     }
-
-    // create histogram for beta events
-    TH2D* betaHistogram = new TH2D("#beta Events","N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax);
         
     if(type=="betaHist" || type=="bothHists") {
-	// customize aesthetic features and labels
-        betaHistogram->SetMarkerColor(6);
-        betaHistogram->SetMarkerStyle(20);
-        betaHistogram->GetYaxis()->SetTitle("Classification Value/Number of Hits");
-        betaHistogram->GetYaxis()->SetTitleOffset(1.2);
-        betaHistogram->GetXaxis()->SetTitle("Number of Hits");
-        betaHistogram->GetXaxis()->SetLabelSize(0.03);
-        betaHistogram->GetYaxis()->SetLabelSize(0.02);
-        // add histogram to the map
-        histFileMap[betaFile] = betaHistogram;
+	    // customize aesthetic features and labels
+        for(size_t i = 0; i < rho.size(); i++) {
+            betaHistograms[i]->SetMarkerColor(6);
+            betaHistograms[i]->SetMarkerStyle(20);
+            betaHistograms[i]->GetYaxis()->SetTitle("Classification Value/Number of Hits");
+            betaHistograms[i]->GetYaxis()->SetTitleOffset(1.2);
+            betaHistograms[i]->GetXaxis()->SetTitle("Number of Hits");
+            betaHistograms[i]->GetXaxis()->SetLabelSize(0.03);
+            betaHistograms[i]->GetYaxis()->SetLabelSize(0.02);
+        }
+        histFileMap[betaFile] = betaHistograms;
     }
 
-    RAT::DB::Get()->SetAirplaneModeStatus(true);
 
-    //loop through all entries in filename
+    RAT::DB::Get()->SetAirplaneModeStatus(true);
     for (std::map<std::string, TH2D*>::iterator it = histFileMap.begin(); it != histFileMap.end(); ++it) {
         RAT::DU::DSReader currentReader(it->first);
-
+        //loop through all entries in filename
         for (size_t i = 0; i < currentReader.GetEntryCount(); i++) {
             const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
-	    
+            
             //loop through all events in entries
             for (size_t j = 0; j < rDS.GetEVCount(); j++) {
                 //Ignore retriggers from residual detector light
-                if (j > 0) {
-                    break;
-                }
-		
+                if (j > 0) { break;}
+            
                 //get the ev
                 const RAT::DS::EV& rEV = rDS.GetEV(j);
 
-                if (!rEV.ClassifierResultExists(className)) {
-                    continue;
-                }
-		
-                if (!rEV.GetClassifierResult(className).GetValid()) {
-                    continue;
-                }
-		
+                if (!rEV.ClassifierResultExists(className)) { continue;}
+                if (!rEV.GetClassifierResult(className).GetValid()) { continue;}
+            
                 // classifier result
                 RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
                 double cValue = cResult.GetClassification(classification);
 
                 // nHit value for calibrated hits
                 const RAT::DS::EV& numberHits = rDS.GetEV(j);
-		
+            
                 // test position
-                if(!rEV.FitResultExists(fitName)) {
-                    continue;
-                }
-                if(rEV.GetFitResult(fitName).GetVertexCount() != 0) {
-                   // continue;
-                }
-		if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsPosition()) {
-                    continue;
-                }
-		
-                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidPosition()) {
-                    continue;
-                }
-                if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsEnergy()) {
-                    continue;
-                }
-                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidEnergy()) {
-                    continue;
-                }
+                if(!rEV.FitResultExists(fitName)) { continue;}
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsPosition()) { continue;}
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidPosition()) { continue;}
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsEnergy()) { continue;}
+                if(!rEV.GetFitResult(fitName).GetVertex(0).ValidEnergy()) { continue;}
 
                 RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
                 RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
 
                 TVector3 pos = fVertex.GetPosition();
 
-                if(full) {
-                    it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-                }
-                else if(getEventCoordinates(pos.X(), pos.Y(), pos.Z(), rho, z, distance)) {
-                    it->second->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-                }
+                for(size_t i = 0; i < rho.size(); i++) {
+                    if(full) {
+                        it->second[i]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+                    }
+                    else if(isInRange(pos.X(), pos.Y(), pos.Z(), rho[i], z[i], distance)) {
+                        it->second[i]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
+                    }
+                }   
             }
         }
     }
-
+    
     // build a legend
     TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
     legend->SetHeader("Legend");
 
     // draw relevant histograms on canvas and build legend
     if (alphaHist) {
-        alphaHistogram->Draw();
-        legend->AddEntry(alphaHistogram, "#alpha Events", "p");
+        alphaHistograms[0]->Draw();
+        legend->AddEntry(alphaHistograms[0], "#alpha Events", "p");
     }
     if (betaHist && !alphaHist) {
-        betaHistogram->Draw();
-        legend->AddEntry(betaHistogram, "#beta Events", "p");
+        betaHistograms[0]->Draw();
+        legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
     else if(bothHists) {
-	betaHistogram->Draw("same");
-	legend->AddEntry(betaHistogram, "#beta Events", "p");
+	    betaHistograms[0]->Draw("same");
+	    legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
 
     legend->Draw();
@@ -176,206 +158,9 @@ TH2D* NhitHistogram(const std::string& alphaFile, const std::string& betaFile, c
 
     // return histograms
     if (alphaHist || bothHists) {
-        return alphaHistogram;
+        return alphaHistograms;
     }
     else {
-        return betaHistogram;
+        return betaHistograms;
     }
-}
-
-// draw scatterplots of alpha and beta events (nhit and classification value as parameters) for an alpha and beta file
-std::vector<TH2D*> NhitHistograms(const std::string& filename, const std::string& fitName, const std::string& className,
-                    const std::string& classification, double rho[], double z[], const double distance = 1.0,
-                    const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false) {
-
-    std::vector<TH2D*> histograms;
-
-    for(size_t i = 0; i < sizeof(rho); i++) {
-        histograms.push_back(new TH2D("Events", "N_{hit} Vs. Classification", nhitBins, nhitMin, nhitMax, classBins, classMin, classMax));
-    }
-
-    RAT::DB::Get()->SetAirplaneModeStatus(true);
-
-    //loop through all entries in filename
-    RAT::DU::DSReader currentReader(filename);
-    for (size_t i = 0; i < currentReader.GetEntryCount(); i++) {
-        const RAT::DS::Entry& rDS = currentReader.GetEntry(i);
-	    
-        //loop through all events in entries
-        for (size_t j = 0; j < rDS.GetEVCount(); j++) {
-            //Ignore retriggers from residual detector light
-            if (j > 0) { break;}
-		
-            //get the ev
-            const RAT::DS::EV& rEV = rDS.GetEV(j);
-
-            if (!rEV.ClassifierResultExists(className)) { continue;}
-	        if (!rEV.GetClassifierResult(className).GetValid()) { continue;}
-		
-            // classifier result
-            RAT::DS::ClassifierResult cResult = rEV.GetClassifierResult(className);
-            double cValue = cResult.GetClassification(classification);
-
-            // nHit value for calibrated hits
-            const RAT::DS::EV& numberHits = rDS.GetEV(j);
-		
-            // test position
-            if(!rEV.FitResultExists(fitName)) { continue;}
-		    if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsPosition()) { continue;}
-            if(!rEV.GetFitResult(fitName).GetVertex(0).ValidPosition()) { continue;}
-            if(!rEV.GetFitResult(fitName).GetVertex(0).ContainsEnergy()) { continue;}
-            if(!rEV.GetFitResult(fitName).GetVertex(0).ValidEnergy()) { continue;}
-
-            RAT::DS::FitResult fResult = rEV.GetFitResult(fitName);
-            RAT::DS::FitVertex fVertex = fResult.GetVertex(0);
-
-            TVector3 pos = fVertex.GetPosition();
-
-            for(size_t i = 0; i < sizeof(rho); i++) {
-                if(getEventCoordinates(pos.X(), pos.Y(), pos.Z(), rho[i], z[i], distance)) {
-                    histograms[i]->Fill(numberHits.GetCalPMTs().GetAllCount(), cValue/(numberHits.GetCalPMTs().GetAllCount()));
-                }
-            }   
-        }
-    }
-
-    return histograms;
-}
-
-// calculate and return statistics about the optimal classifier cutoff and the corresponding acceptances and rejections
-std::vector<double> rejectionInfo(const std::string& alphaFile, const std::string& betaFile, const std::string& fitname,
-                                  const std::string& classname, const std::string& classification,
-                                  const double ratio, const double rhoCoordinate, const double zCoordinate, const double distance, const bool printHistogram = false) {
-
-    TH2D* analysisAlphaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, "alphaHist", rhoCoordinate, zCoordinate, distance);
-    TH2D* analysisBetaHistogram = NhitHistogram(alphaFile, betaFile, fitname, classname, classification, "betaHist", rhoCoordinate, zCoordinate, distance);
-    
-    TCanvas *c1 = new TCanvas("c1", "Rejection Histogram", 100, 10, 1300, 1300);
-    c1->cd();
-
-    double meanNhit = (analysisBetaHistogram->GetMean(1)+analysisAlphaHistogram->GetMean(1))/(analysisBetaHistogram->Integral()+analysisAlphaHistogram->Integral());
-
-    //cut selection histograms
-    TH1D* alphaRejectionHistogram = new TH1D("#alpha and #beta Analysis", "#alpha and #beta Analysis", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
-    TH1D* betaAcceptanceHistogram = new TH1D("#beta Acceptance", "#beta Acceptance", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
-    TH1D* betaSampleFraction = new TH1D("#beta Sample Fraction", "#beta Sample Fraction", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
-    
-    TH1D* youdenSelection = new TH1D("Youden's J Statistic", "Youden's J Statistic", analysisAlphaHistogram->GetNbinsY(),  analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
-    TH1D* generalSelection = new TH1D("General Cut Statistic", "General Cut Statistic", analysisAlphaHistogram->GetNbinsY(), analysisAlphaHistogram->GetMinimum(), analysisAlphaHistogram->GetMaximum());
-    
-    double totalAlphaHits = ratio*analysisAlphaHistogram->Integral();
-    double totalBetaHits = analysisBetaHistogram->Integral();
-    double currentAlphaHits1 = 0;
-    double currentAlphaHits2 = 0;
-    double currentBetaHits = 0;
-    double currentBetaHits2 = 0;
-    double currentX = generalSelection->GetXaxis()->GetXmin();
-
-    double youdenStatistic;
-    double generalStatistic;
-
-    for (int k = 0; k < youdenSelection->GetNbinsX(); k++) {
-        currentAlphaHits1 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), k, youdenSelection->GetNbinsY());
-        currentAlphaHits2 = ratio*analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, k);
-        currentBetaHits = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, k);
-        currentBetaHits2 = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), k, youdenSelection->GetNbinsY());
-        
-        alphaRejectionHistogram->SetBinContent(k, currentAlphaHits1/totalAlphaHits);
-        betaAcceptanceHistogram->SetBinContent(k, currentBetaHits/totalBetaHits);
-
-        if(!(currentBetaHits == 0 && currentAlphaHits2 == 0)) {
-            betaSampleFraction->SetBinContent(k, currentBetaHits/(currentBetaHits+currentAlphaHits2));
-            youdenStatistic = currentBetaHits/(currentBetaHits+currentBetaHits2) + currentAlphaHits1/(currentAlphaHits1+currentAlphaHits2);
-            generalStatistic = currentBetaHits/sqrt(currentBetaHits+currentAlphaHits2);
-        }
-        else {
-            betaSampleFraction->SetBinContent(k, 1.0);
-            youdenStatistic = 0;
-            generalStatistic = 0;
-        }
-
-        //fill for cut selection stats
-        youdenSelection->Fill(currentX, youdenStatistic);
-        generalSelection->Fill(currentX, generalStatistic);
-
-        currentX+= (std::abs(youdenSelection->GetXaxis()->GetXmin() - youdenSelection->GetXaxis()->GetXmax()))/youdenSelection->GetNbinsX();
-    }
-    
-    if(printHistogram) {
-        
-         // customize aesthetics for histograms
-        alphaRejectionHistogram->SetLineColor(4);
-        betaAcceptanceHistogram->SetLineColor(6);
-        betaSampleFraction->SetLineColor(3);
-        youdenSelection->SetLineColor(2);
-        generalSelection->SetLineColor(7);
-
-        alphaRejectionHistogram->SetLineWidth(3);
-        betaAcceptanceHistogram->SetLineWidth(3);
-        betaSampleFraction->SetLineWidth(3);
-        youdenSelection->SetLineWidth(3);
-        generalSelection->SetLineWidth(3);
-        
-        alphaRejectionHistogram->GetYaxis()->SetTitle("#alpha Rejection / #beta Acceptance (%)");
-        alphaRejectionHistogram->GetYaxis()->SetTitleOffset(1.2);
-        alphaRejectionHistogram->GetXaxis()->SetTitle("Classification Cutoff");
-        alphaRejectionHistogram->GetXaxis()->SetLabelSize(0.03);
-        alphaRejectionHistogram->GetYaxis()->SetLabelSize(0.02);
-
-        alphaRejectionHistogram->Draw();
-        betaAcceptanceHistogram->Draw("same");
-        betaSampleFraction->Draw("same");
-        youdenSelection->Draw("same");
-        generalSelection->Draw("same");
-
-        // build a legend
-        TStyle* gStyle = new TStyle("", "");
-
-        TLegend *legend = new TLegend(0.1,0.7,0.3,0.9);
-        legend->SetHeader("Legend");
-        legend->AddEntry(alphaRejectionHistogram, "#alpha Rejection", "l");
-        legend->AddEntry(betaAcceptanceHistogram, "#beta Acceptance", "l");
-        legend->AddEntry(betaSampleFraction, "#beta Sample Fraction", "l");
-        legend->AddEntry(youdenSelection, "Youden's J Statistic", "l");
-        legend->AddEntry(generalSelection, "General Selection Statistic", "l");
-        legend->Draw();
-
-        c1->Print("AlphaRejectionHistogram_Revised.pdf", "pdf");
-    }
-
-    double youdenClassifierBin = youdenSelection->GetMaximumBin();
-    double youdenClassifierMax = youdenSelection->GetXaxis()->GetBinCenter(youdenClassifierBin);
-    double generalClassifierBin = generalSelection->GetMaximumBin();
-    double generalClassifierMax = generalSelection->GetXaxis()->GetBinCenter(generalClassifierBin);
-    double youdenNhitMax = youdenSelection->GetMaximum();
-    double generalNhitMax = generalSelection->GetMaximum();
-
-    double allAlphas = analysisAlphaHistogram->Integral();
-    double allBetas = analysisBetaHistogram->Integral();
-
-    if (allAlphas==0) {
-        allAlphas = 1e-15;
-    }
-    if (allBetas == 0) {
-        allBetas = 1e-15;
-    }
-
-    double youdenAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), youdenClassifierBin, youdenSelection->GetNbinsY()) / allAlphas;
-    double youdenBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, youdenClassifierBin) / allBetas;
-    double generalAlphaRejection = analysisAlphaHistogram->Integral(1, youdenSelection->GetNbinsX(), generalClassifierBin, youdenSelection->GetNbinsY()) / allAlphas;
-    double generalBetaAcceptance = analysisBetaHistogram->Integral(1, youdenSelection->GetNbinsX(), 1, generalClassifierBin) /allBetas;
-
-    std::vector<double> values;
-    values.push_back(youdenClassifierMax);
-    values.push_back(youdenNhitMax);
-    values.push_back(generalClassifierMax);
-    values.push_back(generalNhitMax);
-    values.push_back(youdenAlphaRejection);
-    values.push_back(youdenBetaAcceptance);
-    values.push_back(generalAlphaRejection);
-    values.push_back(generalBetaAcceptance);
-    values.push_back(meanNhit);
-
-    return values;
 }
