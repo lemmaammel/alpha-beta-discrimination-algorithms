@@ -21,9 +21,18 @@ import os
 def rejectionInfo(alpha_hist, beta_hist, ratio):
                                            
     alpha_histogram = alpha_hist
-    beta_histogram = beta_hist                                       
+    beta_histogram = beta_hist  
+
+    allAlphas = alpha_histogram.Integral()
+    allBetas = beta_histogram.Integral()
+
+    if allAlphas==0:
+        allAlphas = 1e-15
+   
+    if allBetas == 0:
+        allBetas = 1e-15                                     
                                            
-    meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(alpha_histogram.Integral()+beta_histogram.Integral())
+    meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(allAlphas+allBetas)
 
     # cut selection histograms
     youden_histogram = r.TH1D("Youden's J Statistic", "Youden's J Statistic", alpha_histogram.GetNbinsY(),  alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
@@ -40,9 +49,9 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
 
     for k in range(0, youden_histogram.GetNbinsX()):
         alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
-        alpha_acceptance = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
+        alpha_acceptance = ratio*allAlphas - alpha_rejection
         beta_acceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
-        beta_rejection = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
+        beta_rejection = allBetas - beta_acceptance
 
         if not ((beta_acceptance == 0 and alpha_rejection == 0) or (beta_acceptance+beta_rejection == 0 or alpha_acceptance+alpha_rejection == 0)):
             youden_statistic = beta_acceptance/(beta_acceptance+beta_rejection) + alpha_rejection/(alpha_acceptance+alpha_rejection)
@@ -66,23 +75,13 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     youdenNhitMax = youden_histogram.GetMaximum()
     generalNhitMax = general_histogram.GetMaximum()
 
-    allAlphas = alpha_histogram.Integral()
-    allBetas = beta_histogram.Integral()
-
-    if allAlphas==0:
-        allAlphas = 1e-15
-   
-    if allBetas == 0:
-        allBetas = 1e-15
-
     youdenAlphaRejection = alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), youdenClassifierBin, youden_histogram.GetNbinsY()) / allAlphas
     youdenBetaAcceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, youdenClassifierBin) / allBetas
     generalAlphaRejection = alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), generalClassifierBin, youden_histogram.GetNbinsY()) / allAlphas
     generalBetaAcceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, generalClassifierBin) /allBetas
 
     return [youdenClassifierMax, youdenNhitMax, generalClassifierMax, generalNhitMax, youdenAlphaRejection, youdenBetaAcceptance, generalAlphaRejection, generalBetaAcceptance, meanNhit]
-                                           
-                                           
+                                                                                  
 # Collects user input from the command line for files and customization                                
 parser = argparse.ArgumentParser()
 parser.add_argument('--filetype', '-f', type = str, default = '', help = 'File type of alpha and beta files ("ntuple" OR "ratds")')
@@ -94,7 +93,7 @@ parser.add_argument('--zCoordinates', '-z', type = int, nargs='+', help = 'List 
 parser.add_argument('--distance', '-d', type = int, default = 1, help = 'Distance between coordinates')
 parser.add_argument('--sideLength', '-l', type = int, help = 'Side length of square')
 parser.add_argument('--ratio', '-ra', type = int, default = 1, help = 'Ratio of alpha to beta events')
-
+parser.add_argument('--name', '-n', type = str, default = '', help = 'Name of files produced')
 
 args = parser.parse_args()
 alphaFile = "{}*.root".format(args.alphafile)
@@ -114,14 +113,15 @@ else:
 rhoCoordinates = r.std.vector('double')()
 zCoordinates = r.std.vector('double')()
 distance = args.distance
+name = args.name
 
 # Creates rho and z coordinate lists for histogram segmentation based on user input
 if args.shape == "square":
-        squareLength = args.sideLength
-        for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
-                for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
-                        rhoCoordinates.push_back(i)
-                        zCoordinates.push_back(j)                
+    squareLength = args.sideLength
+    for i in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
+        for j in range(-math.floor(squareLength/distance, math.floor(squareLength/distance))):
+            rhoCoordinates.push_back(i)
+            zCoordinates.push_back(j)                
 
 if args.shape == "list":
 	for i in args.rhoCoordinates:
@@ -134,10 +134,10 @@ yTicks = []
 
 # Generates a list of x tick locations and y tick locations for histogram appearance
 for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
-        xTicks.append(min(rhoCoordinates) + (distance*i))
+    xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
 for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
-        yTicks.append(min(zCoordinates) + (distance*i))
+    yTicks.append(min(zCoordinates) + (distance*i))
 
 ClassifierYoudenArray = []
 ValueYoudenArray = []
@@ -164,53 +164,53 @@ betaHistograms = []
 
 # Based on filetype, calls a c++ function to sort the events from the given files into seperate histograms for every coordinate
 if args.filetype == "ntuple":
-        alphaHistograms = r.NhitHistograms(alphaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance)
-        betaHistograms = r.NhitHistograms(betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance)
+    alphaHistograms = r.NhitHistograms(alphaFile, betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance, "alphaHist")
+    betaHistograms = r.NhitHistograms(betaFile, betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance, "betaHist")
 elif args.filetype == "ratds":
-        alphaHistograms = r.NhitHistograms(alphaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance)
-        betaHistograms = r.NhitHistograms(betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance)
+    alphaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance, "alphaHist")
+    betaHistograms = r.NhitHistograms(betaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance, "betaHist")
 
 for i in range(0, len(alphaHistograms)):
-        values = rejectionInfo(alphaHistograms[i], betaHistograms[i], ratio)
+    values = rejectionInfo(alphaHistograms[i], betaHistograms[i], ratio)
 
-        ClassifierYoudenArray.append(values[0])
-        ValueYoudenArray.append(values[1])
-        ClassifierGeneralArray.append(values[2])
-        ValueGeneralArray.append(values[3])
-        AlphaRejectionYoudenArray.append(values[4])
-        BetaAcceptanceYoudenArray.append(values[5])
-        AlphaRejectionGeneralArray.append(values[6])
-        BetaAcceptanceGeneralArray.append(values[7])
+    ClassifierYoudenArray.append(values[0])
+    ValueYoudenArray.append(values[1])
+    ClassifierGeneralArray.append(values[2])
+    ValueGeneralArray.append(values[3])
+    AlphaRejectionYoudenArray.append(values[4])
+    BetaAcceptanceYoudenArray.append(values[5])
+    AlphaRejectionGeneralArray.append(values[6])
+    BetaAcceptanceGeneralArray.append(values[7])
                                           
-        ClassifierAlphaArray.append(alphaHistograms[i].GetMean(2))
-        NhitAlphaArray.append(alphaHistograms[i].GetMean(1))
-        ClassifierBetaArray.append(betaHistograms[i].GetMean(2))
-        NhitBetaArray.append(betaHistograms[i].GetMean(1))                              
+    ClassifierAlphaArray.append(alphaHistograms[i].GetMean(2))
+    NhitAlphaArray.append(alphaHistograms[i].GetMean(1))
+    ClassifierBetaArray.append(betaHistograms[i].GetMean(2))
+    NhitBetaArray.append(betaHistograms[i].GetMean(1))                              
 
-for graph in graphs:
-        graph.extend([-100, -100, -100])
+#for graph in graphs:
+#        graph.extend([-100, -100, -100])
 
-rhoCoordinates.push_back(3)
-rhoCoordinates.push_back(4)
-rhoCoordinates.push_back(4)
-zCoordinates.push_back(4)
-zCoordinates.push_back(4)
-zCoordinates.push_back(4)
+#rhoCoordinates.push_back(3)
+#rhoCoordinates.push_back(4)
+#rhoCoordinates.push_back(4)
+#zCoordinates.push_back(4)
+#zCoordinates.push_back(4)
+#zCoordinates.push_back(4)
 
 for i in range(0,12):
-        p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
+    p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
 
-        for k in range(len(rhoCoordinates)):
-                array = graphs[i]
-                p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
+    for k in range(len(rhoCoordinates)):
+        array = graphs[i]
+        p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
 
-        # Aesthetic customization
-        p.xlabel(r"$\rho$ coordinate")
-        p.ylabel(r"$z$ coordinate (m)")
-        p.title(titles[i])
-        p.xticks(xTicks)
-        p.yticks(yTicks)
-        p.colorbar(label=colorbar[i])
-        p.show()               
-        p.savefig("SummaryPartialFill{}.pdf".format(graphs2[i]))
-        p.clf()
+    # Aesthetic customization
+    p.xlabel(r"$\rho$ coordinate")
+    p.ylabel(r"$z$ coordinate (m)")
+    p.title(titles[i])
+    p.xticks(xTicks)
+    p.yticks(yTicks)
+    p.colorbar(label=colorbar[i])
+    p.show()               
+    p.savefig("{}{}.pdf".format(name,graphs2[i]))
+    p.clf()

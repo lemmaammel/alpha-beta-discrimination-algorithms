@@ -22,10 +22,10 @@ bool isInRange(double posx, double posy, double posz, double rho, double z, doub
 }
 
 std::vector<TH2D*> NhitHistograms(std::string alphaFile, std::string betaFile, std::vector<double> rho, 
-                    const std::string& type = "bothHists", std::vector<double> z, int style, double distance, 
+                    std::vector<double> z, int style, double distance, const std::string& type = "bothHists",
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1200,
                     const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, 
-                    const bool full = false) {
+                    const bool full = false, const bool aesthetics = false) {
 
     std::vector<TH2D*> alphaHistograms;
     std::vector<TH2D*> betaHistograms;
@@ -43,6 +43,7 @@ std::vector<TH2D*> NhitHistograms(std::string alphaFile, std::string betaFile, s
 
     if (type=="alphaHist" || type=="bothHists") {
         // customize aesthetic features and labels
+        if(aesthetics) {
             for(size_t i = 0; i < rho.size(); i++) {
                 alphaHistograms[i]->SetMarkerColor(4);
                 alphaHistograms[i]->SetMarkerStyle(20);
@@ -52,11 +53,13 @@ std::vector<TH2D*> NhitHistograms(std::string alphaFile, std::string betaFile, s
                 alphaHistograms[i]->GetXaxis()->SetLabelSize(0.03);
                 alphaHistograms[i]->GetYaxis()->SetLabelSize(0.02);
             }
-            histFileMap[alphaFile] = alphaHistograms;
         }
+        histFileMap[alphaFile] = alphaHistograms;
+    }
             
-        if(type=="betaHist" || type=="bothHists") {
+    if(type=="betaHist" || type=="bothHists") {
         // customize aesthetic features and labels
+        if(aesthetics) {
             for(size_t i = 0; i < rho.size(); i++) {
                 betaHistograms[i]->SetMarkerColor(6);
                 betaHistograms[i]->SetMarkerStyle(20);
@@ -66,8 +69,9 @@ std::vector<TH2D*> NhitHistograms(std::string alphaFile, std::string betaFile, s
                 betaHistograms[i]->GetXaxis()->SetLabelSize(0.03);
                 betaHistograms[i]->GetYaxis()->SetLabelSize(0.02);
             }
-            histFileMap[betaFile] = betaHistograms;
         }
+        histFileMap[betaFile] = betaHistograms;
+    }
 
     for (std::map<std::string, TH2D*>::iterator it = histFileMap.begin(); it != histFileMap.end(); ++it) {
         TFile *f = TFile::Open(it->first.c_str());
@@ -102,24 +106,26 @@ std::vector<TH2D*> NhitHistograms(std::string alphaFile, std::string betaFile, s
     }
 
     // build a legend
-    TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
-    legend->SetHeader("Legend");
+    if(aesthetics) {
+        TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
+        legend->SetHeader("Legend");
+    }
 
     // draw relevant histograms on canvas and build legend
     if (alphaHist) {
         alphaHistograms[0]->Draw();
-        legend->AddEntry(alphaHistograms[0], "#alpha Events", "p");
+        if(aesthetics) legend->AddEntry(alphaHistograms[0], "#alpha Events", "p");
     }
     if (betaHist && !alphaHist) {
         betaHistograms[0]->Draw();
-        legend->AddEntry(betaHistograms[0], "#beta Events", "p");
+        if(aesthetics) legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
     else if(bothHists) {
 	    betaHistograms[0]->Draw("same");
-	    legend->AddEntry(betaHistograms[0], "#beta Events", "p");
+	    if(aesthetics) legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
 
-    legend->Draw();
+    if(aesthetics) legend->Draw();
 
     // store histograms in PDFs
     c1->Print("realDataNhitHistogram.pdf", "pdf");
