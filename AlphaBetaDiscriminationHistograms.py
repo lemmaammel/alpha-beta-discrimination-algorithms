@@ -7,15 +7,11 @@ import os, sys, time, math
 import numpy as np
 from array import array
 import matplotlib as m
-import argparse
 m.use('Agg')
+import argparse
 import ROOT as r
 import rat
-import csv
-import math
 import matplotlib.pyplot as p
-import significantFigures as s
-import os
 
 # Function that calculates relevant statistics from given alpha and beta event histograms
 def rejectionInfo(alpha_hist, beta_hist, ratio):
@@ -25,7 +21,7 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
 
     allAlphas = alpha_histogram.Integral()
     allBetas = beta_histogram.Integral()
-
+ 
     if allAlphas==0:
         allAlphas = 1e-15
    
@@ -35,8 +31,8 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     meanNhit = (alpha_histogram.GetMean(1)+beta_histogram.GetMean(1))/(allAlphas+allBetas)
 
     # cut selection histograms
-    youden_histogram = r.TH1D("Youden's J Statistic", "Youden's J Statistic", alpha_histogram.GetNbinsY(),  alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
-    general_histogram = r.TH1D("General Cut Statistic", "General Cut Statistic", alpha_histogram.GetNbinsY(), alpha_histogram.GetMinimum(), alpha_histogram.GetMaximum())
+    youden_histogram = r.TH1D("Youden's J Statistic", "Youden's J Statistic", alpha_histogram.GetNbinsY(),  alpha_histogram.GetYaxis().GetXmin(), alpha_histogram.GetYaxis().GetXmax())
+    general_histogram = r.TH1D("General Cut Statistic", "General Cut Statistic", alpha_histogram.GetNbinsY(), alpha_histogram.GetYaxis().GetXmin(), alpha_histogram.GetYaxis().GetXmax())
                                            
     alpha_rejection = 0
     alpha_acceptance = 0
@@ -46,27 +42,30 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
 
     youden_statistic = 0
     general_statistic = 0
-
+    
     for k in range(0, youden_histogram.GetNbinsX()):
-        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, youden_histogram.GetNbinsY())
+        alpha_rejection = ratio*alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), k, alpha_histogram.GetNbinsY())
         alpha_acceptance = ratio*allAlphas - alpha_rejection
         beta_acceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, k)
         beta_rejection = allBetas - beta_acceptance
-
-        if not ((beta_acceptance == 0 and alpha_rejection == 0) or (beta_acceptance+beta_rejection == 0 or alpha_acceptance+alpha_rejection == 0)):
+	
+        if not (beta_acceptance+beta_rejection == 0 or alpha_acceptance+alpha_rejection == 0 or beta_acceptance+alpha_rejection == 0):
             youden_statistic = beta_acceptance/(beta_acceptance+beta_rejection) + alpha_rejection/(alpha_acceptance+alpha_rejection)
             general_statistic = beta_acceptance/math.sqrt(beta_acceptance+alpha_rejection)
-
         else:
             youden_statistic = 0
             general__statistic = 0
-
+   
         #fill for cut selection stats
         youden_histogram.Fill(x, youden_statistic)
         general_histogram.Fill(x, general_statistic)
 
         x += abs(youden_histogram.GetXaxis().GetXmin() - youden_histogram.GetXaxis().GetXmax())/youden_histogram.GetNbinsX()
     
+    canvas = r.TCanvas("canvas")
+    general_histogram.Draw("h")
+    youden_histogram.Draw("h")
+    canvas.Print("test.pdf")
 
     youdenClassifierBin = youden_histogram.GetMaximumBin()
     youdenClassifierMax = youden_histogram.GetXaxis().GetBinCenter(youdenClassifierBin)
@@ -75,10 +74,10 @@ def rejectionInfo(alpha_hist, beta_hist, ratio):
     youdenNhitMax = youden_histogram.GetMaximum()
     generalNhitMax = general_histogram.GetMaximum()
 
-    youdenAlphaRejection = alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), youdenClassifierBin, youden_histogram.GetNbinsY()) / allAlphas
-    youdenBetaAcceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, youdenClassifierBin) / allBetas
-    generalAlphaRejection = alpha_histogram.Integral(1, youden_histogram.GetNbinsX(), generalClassifierBin, youden_histogram.GetNbinsY()) / allAlphas
-    generalBetaAcceptance = beta_histogram.Integral(1, youden_histogram.GetNbinsX(), 1, generalClassifierBin) /allBetas
+    youdenAlphaRejection = alpha_histogram.Integral(1, alpha_histogram.GetNbinsX(), youdenClassifierBin, alpha_histogram.GetNbinsY()) / allAlphas
+    youdenBetaAcceptance = beta_histogram.Integral(1, beta_histogram.GetNbinsX(), 1, youdenClassifierBin) / allBetas
+    generalAlphaRejection = alpha_histogram.Integral(1, alpha_histogram.GetNbinsX(), generalClassifierBin, alpha_histogram.GetNbinsY()) / allAlphas
+    generalBetaAcceptance = beta_histogram.Integral(1, beta_histogram.GetNbinsX(), 1, generalClassifierBin) /allBetas
 
     return [youdenClassifierMax, youdenNhitMax, generalClassifierMax, generalNhitMax, youdenAlphaRejection, youdenBetaAcceptance, generalAlphaRejection, generalBetaAcceptance, meanNhit]
                                                                                   
@@ -131,12 +130,13 @@ if args.shape == "list":
         
 xTicks = []
 yTicks = []
+print(zCoordinates)
 
 # Generates a list of x tick locations and y tick locations for histogram appearance
-for i in range(0, math.floor(min(rhoCoordinates)-max(rhoCoordinates)/distance)):
+for i in range(0, int(math.floor(max(rhoCoordinates)/distance)-min(rhoCoordinates))+1):
     xTicks.append(min(rhoCoordinates) + (distance*i))
                                  
-for i in range(0, math.floor(min(zCoordinates)-max(zCoordinates)/distance)):
+for i in range(0, int(math.floor(max(zCoordinates)/distance)-min(zCoordinates))+1):
     yTicks.append(min(zCoordinates) + (distance*i))
 
 ClassifierYoudenArray = []
@@ -165,10 +165,10 @@ betaHistograms = []
 # Based on filetype, calls a c++ function to sort the events from the given files into seperate histograms for every coordinate
 if args.filetype == "ntuple":
     alphaHistograms = r.NhitHistograms(alphaFile, betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance, "alphaHist")
-    betaHistograms = r.NhitHistograms(betaFile, betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance, "betaHist")
+    betaHistograms = r.NhitHistograms(alphaFile, betaFile, np.array(rhoCoordinates), np.array(zCoordinates), ratio, distance, "betaHist")
 elif args.filetype == "ratds":
     alphaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance, "alphaHist")
-    betaHistograms = r.NhitHistograms(betaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance, "betaHist")
+    betaHistograms = r.NhitHistograms(alphaFile, betaFile, "partialFitter", "BerkeleyAlphaBeta:partialFitter", "likelihood", rhoCoordinates, zCoordinates, distance, "betaHist")
 
 for i in range(0, len(alphaHistograms)):
     values = rejectionInfo(alphaHistograms[i], betaHistograms[i], ratio)
@@ -187,22 +187,12 @@ for i in range(0, len(alphaHistograms)):
     ClassifierBetaArray.append(betaHistograms[i].GetMean(2))
     NhitBetaArray.append(betaHistograms[i].GetMean(1))                              
 
-#for graph in graphs:
-#        graph.extend([-100, -100, -100])
-
-#rhoCoordinates.push_back(3)
-#rhoCoordinates.push_back(4)
-#rhoCoordinates.push_back(4)
-#zCoordinates.push_back(4)
-#zCoordinates.push_back(4)
-#zCoordinates.push_back(4)
-
 for i in range(0,12):
-    p.hist2d(rhoCoordinates, zCoordinates, bins=(5,4), range=((-.5,4.5),(1.5,4.5)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
-
+    p.hist2d(rhoCoordinates, zCoordinates, bins=(len(rhoCoordinates)/2, len(zCoordinates)/2), range=((min(rhoCoordinates)-distance/2,max(rhoCoordinates)+distance/2),(min(zCoordinates)-distance/2,max(zCoordinates)+distance/2)), weights = graphs[i], cmap=p.cm.viridis, cmin=-10)
+    
     for k in range(len(rhoCoordinates)):
         array = graphs[i]
-        p.text(rhoCoordinates[k], zCoordinates[k], s.significantFigures(array[k], 4), ha="center",va="center",color="w")
+        p.text(rhoCoordinates[k], zCoordinates[k], "{:.4f}".format(array[k]), ha="center",va="center",color="w")
 
     # Aesthetic customization
     p.xlabel(r"$\rho$ coordinate")

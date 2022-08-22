@@ -37,7 +37,7 @@ std::vector<TH2D*> NhitHistograms(const std::string& alphaFile, const std::strin
                     const std::string& className, const std::string& classification, 
                     std::vector<double> rho, std::vector<double> z, const double distance, const std::string& type = "bothHists",
                     const int nhitBins = 100, const double nhitMin = 100, const double nhitMax = 1000,
-                    const int classBins = 100, const double classMin = -0.1, const double classMax = 0.1, const bool full = false, const bool aesthetics = false) {
+                    const int classBins = 100, const double classMin = -0.05, const double classMax = 0.05, const bool full = false, const bool aesthetics = false) {
 
     std::vector<TH2D*> alphaHistograms;
     std::vector<TH2D*> betaHistograms;
@@ -138,21 +138,19 @@ std::vector<TH2D*> NhitHistograms(const std::string& alphaFile, const std::strin
     }
     
     // build a legend
-    if(aesthetics) {
-        TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
-        legend->SetHeader("Legend");
-    }
+    TLegend *legend = new TLegend(0.1, 0.7, 0.48, 0.9);
+    legend->SetHeader("Legend");
 
     // draw relevant histograms on canvas and build legend
-    if (alphaHist) {
+    if (type=="alphaHist") {
         alphaHistograms[0]->Draw();
         if(aesthetics) legend->AddEntry(alphaHistograms[0], "#alpha Events", "p");
     }
-    if (betaHist && !alphaHist) {
+    if (type=="betaHist" && type!="alphaHist") {
         betaHistograms[0]->Draw();
         if(aesthetics) legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
-    else if(bothHists) {
+    else if(type=="bothHists") {
 	    betaHistograms[0]->Draw("same");
 	    if(aesthetics) legend->AddEntry(betaHistograms[0], "#beta Events", "p");
     }
@@ -163,7 +161,7 @@ std::vector<TH2D*> NhitHistograms(const std::string& alphaFile, const std::strin
     c1->Print("realDataNhitHistogram.pdf", "pdf");
 
     // return histograms
-    if (alphaHist || bothHists) {
+    if (type=="alphaHist" || type=="bothHists") {
         return alphaHistograms;
     }
     else {
